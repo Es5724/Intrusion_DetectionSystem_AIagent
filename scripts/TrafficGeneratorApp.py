@@ -7,6 +7,8 @@ import socket
 import random
 from multiprocessing import Process, Value
 import subprocess
+import ctypes
+import sys
 
 # SYN 플러드 공격을 수행하는 함수.
 def syn_flood(target_ip, count, stop_flag):
@@ -147,14 +149,16 @@ class TrafficGeneratorApp(QWidget):
 
     # 트래픽을 생성하고 전송하는 메서드.
     def generate_traffic(self):
+        if not self.is_admin():
+            QMessageBox.critical(self, "권한 오류", "관리자 권한이 필요합니다.")
+            self.request_admin_privileges()
+            return
+
         self.stop_flag.value = False  # 중단 플래그 초기화
         target_ip = self.ip_input.text().strip()
         packet_count = int(self.packet_count_input.text())
         if self.is_valid_ip(target_ip):
-            # 트래픽 생성 시작 알림
             QMessageBox.information(self, "트래픽 생성", "트래픽 생성이 시작됩니다.")
-
-            # 명령 프롬프트 창 열기
             self.cmd_process = subprocess.Popen("start cmd /k echo 트래픽 생성 중...", shell=True)
 
             attack_methods = []
@@ -171,7 +175,6 @@ class TrafficGeneratorApp(QWidget):
             if self.http_request_modification_checkbox.isChecked():
                 attack_methods.append(http_request_modification)
 
-            # 각 공격 기법을 별도의 프로세스로 실행
             for method in attack_methods:
                 process = Process(target=method, args=(target_ip, packet_count, self.stop_flag))
                 process.start()
@@ -205,4 +208,16 @@ class TrafficGeneratorApp(QWidget):
         if hasattr(self, 'cmd_process'):
             self.cmd_process.terminate()  # 명령 프롬프트 창 닫기
         # 트래픽 생성 중단 알림
-        QMessageBox.information(self, "트래픽 중단", "트래픽 생성이 중단되었습니다.") 
+        QMessageBox.information(self, "트래픽 중단", "트래픽 생성이 중단되었습니다.")
+
+    def is_admin(self):
+        try:
+            return ctypes.windll.shell32.IsUserAnAdmin()
+        except:
+            return False
+
+    def request_admin_privileges(self):
+        try:
+            ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+        except Exception as e:
+            QMessageBox.critical(self, "권한 오류", f"관리자 권한 요청에 실패했습니다: {e}") 
