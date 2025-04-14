@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QFileDial
 from PyQt6.QtGui import QIcon, QCloseEvent
 import pandas as pd
 from scapy.all import rdpcap, IP, TCP, UDP, ICMP
-from packet_collector import preprocess_packets
+from packet_collector import PacketCapture
 from PyQt6.QtCore import Qt
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
@@ -61,7 +61,8 @@ class DataPreprocessingApp(QWidget):
                     data = pd.read_csv(file_path)
                 else:
                     packets = rdpcap(file_path)
-                    data = preprocess_packets(packets)
+                    packet_capture = PacketCapture(interface='eth0')  # 예시 인터페이스 이름 사용
+                    data = packet_capture.preprocess_packets(packets)
                 print("데이터 파일이 성공적으로 로드되었습니다.")
                 self.display_data_in_table(data)
             except Exception as e:

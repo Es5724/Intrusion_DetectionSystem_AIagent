@@ -1,3 +1,4 @@
+# 필요한 모듈을 임포트
 from scapy.all import sniff, IP, TCP, UDP, ICMP
 import pandas as pd
 import os
@@ -17,79 +18,79 @@ import winreg
 import psutil
 import re
 
-def capture_packets(interface, count=100):
-    """지정된 네트워크 인터페이스에서 패킷을 캡처합니다."""
-    packets = sniff(iface=interface, count=count)
-    return packets
+# 패킷 캡처 기능을 모듈화
+class PacketCapture:
+    def __init__(self, interface, count=100):
+        self.interface = interface
+        self.count = count
 
-def _get_packet_info(packet):
-    """패킷 정보 추출"""
-    info = []
-    
-    # IP 정보
-    if IP in packet:
-        info.append(f"IP {packet[IP].src} → {packet[IP].dst}")
-        info.append(f"TTL: {packet[IP].ttl}")
-        info.append(f"ID: {packet[IP].id}")
-        
-        # TCP 정보
-        if TCP in packet:
-            info.append(f"TCP {packet[TCP].sport} → {packet[TCP].dport}")
-            info.append(f"Seq: {packet[TCP].seq}")
-            info.append(f"Ack: {packet[TCP].ack}")
-            info.append(f"Window: {packet[TCP].window}")
-            
-            # TCP 플래그
-            flags = []
-            if packet[TCP].flags & 0x02:  # SYN
-                flags.append("SYN")
-            if packet[TCP].flags & 0x10:  # ACK
-                flags.append("ACK")
-            if packet[TCP].flags & 0x01:  # FIN
-                flags.append("FIN")
-            if packet[TCP].flags & 0x04:  # RST
-                flags.append("RST")
-            if packet[TCP].flags & 0x08:  # PSH
-                flags.append("PSH")
-            if packet[TCP].flags & 0x20:  # URG
-                flags.append("URG")
-            if flags:
-                info.append(f"Flags: {' '.join(flags)}")
-        
-        # UDP 정보
-        elif UDP in packet:
-            info.append(f"UDP {packet[UDP].sport} → {packet[UDP].dport}")
-            info.append(f"Length: {packet[UDP].len}")
-        
-        # ICMP 정보
-        elif ICMP in packet:
-            info.append(f"ICMP Type: {packet[ICMP].type}")
-            info.append(f"ICMP Code: {packet[ICMP].code}")
-    
-    return ' | '.join(info)
+    def capture_packets(self):
+        """지정된 네트워크 인터페이스에서 패킷을 캡처합니다."""
+        return sniff(iface=self.interface, count=self.count)
 
-def preprocess_packets(packets):
-    """캡처된 패킷을 DataFrame으로 전처리합니다."""
-    data = []
-    for packet in packets:
+    def preprocess_packets(self, packets):
+        """캡처된 패킷을 DataFrame으로 전처리합니다."""
+        data = []
+        for packet in packets:
+            if IP in packet:
+                data.append({
+                    'src_ip': packet[IP].src,
+                    'dst_ip': packet[IP].dst,
+                    'protocol': packet[IP].proto,
+                    'length': len(packet),
+                    'info': self._get_packet_info(packet)
+                })
+        return pd.DataFrame(data)
+
+    def _get_packet_info(self, packet):
+        """패킷 정보 추출"""
+        info = []
         if IP in packet:
-            data.append({
-                'src_ip': packet[IP].src,
-                'dst_ip': packet[IP].dst,
-                'protocol': packet[IP].proto,
-                'length': len(packet),
-                'info': _get_packet_info(packet)
-            })
-    return pd.DataFrame(data)
+            info.append(f"IP {packet[IP].src} → {packet[IP].dst}")
+            info.append(f"TTL: {packet[IP].ttl}")
+            info.append(f"ID: {packet[IP].id}")
+            if TCP in packet:
+                info.append(f"TCP {packet[TCP].sport} → {packet[TCP].dport}")
+                info.append(f"Seq: {packet[TCP].seq}")
+                info.append(f"Ack: {packet[TCP].ack}")
+                info.append(f"Window: {packet[TCP].window}")
+                flags = self._get_tcp_flags(packet[TCP].flags)
+                if flags:
+                    info.append(f"Flags: {' '.join(flags)}")
+            elif UDP in packet:
+                info.append(f"UDP {packet[UDP].sport} → {packet[UDP].dport}")
+                info.append(f"Length: {packet[UDP].len}")
+            elif ICMP in packet:
+                info.append(f"ICMP Type: {packet[ICMP].type}")
+                info.append(f"ICMP Code: {packet[ICMP].code}")
+        return ' | '.join(info)
 
-def save_to_csv(dataframe, filename):
-    """DataFrame을 CSV 파일로 저장합니다."""
-    if not os.path.exists('data'):
-        os.makedirs('data')
-    filepath = os.path.join('data', filename)
-    dataframe.to_csv(filepath, index=False)
-    print(f"데이터가 {filepath}에 저장되었습니다.")
+    def _get_tcp_flags(self, flags):
+        """TCP 플래그 추출"""
+        flag_list = []
+        if flags & 0x02:  # SYN
+            flag_list.append("SYN")
+        if flags & 0x10:  # ACK
+            flag_list.append("ACK")
+        if flags & 0x01:  # FIN
+            flag_list.append("FIN")
+        if flags & 0x04:  # RST
+            flag_list.append("RST")
+        if flags & 0x08:  # PSH
+            flag_list.append("PSH")
+        if flags & 0x20:  # URG
+            flag_list.append("URG")
+        return flag_list
 
+    def save_to_csv(self, dataframe, filename):
+        """DataFrame을 CSV 파일로 저장합니다."""
+        if not os.path.exists('data'):
+            os.makedirs('data')
+        filepath = os.path.join('data', filename)
+        dataframe.to_csv(filepath, index=False)
+        print(f"데이터가 {filepath}에 저장되었습니다.")
+
+# PacketCaptureCore 클래스의 리팩터링
 class PacketCaptureCore:
     def __init__(self):
         self.packet_queue = queue.Queue(maxsize=100)
@@ -100,7 +101,7 @@ class PacketCaptureCore:
         self.capture_completed = False
 
     def check_npcap(self):
-        # Check registry for Npcap
+        """Npcap 설치 여부를 확인합니다."""
         try:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SOFTWARE\Npcap')
             winreg.CloseKey(key)
@@ -108,8 +109,6 @@ class PacketCaptureCore:
             return True
         except FileNotFoundError:
             print("Npcap not found in registry: SOFTWARE\\Npcap")
-
-        # Check alternative registry path
         try:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SOFTWARE\WOW6432Node\Npcap')
             winreg.CloseKey(key)
@@ -117,49 +116,39 @@ class PacketCaptureCore:
             return True
         except FileNotFoundError:
             print("Npcap not found in registry: SOFTWARE\\WOW6432Node\\Npcap")
-
-        # Check default installation directory
         default_path = os.path.join(os.environ.get('SystemRoot', 'C:\Windows'), 'System32', 'Npcap')
         if os.path.exists(default_path):
             print(f"Npcap detected in directory: {default_path}")
             return True
         else:
             print(f"Npcap not found in directory: {default_path}")
-
         return False
 
-    def install_npcap(self):
-        pass  # ... existing code from the second code snippet ...
-
-    def check_admin_privileges(self):
-        pass  # ... existing code from the second code snippet ...
-
     def get_network_interfaces(self):
+        """네트워크 인터페이스 목록을 반환합니다."""
         interfaces = psutil.net_if_addrs()
         return list(interfaces.keys())
 
     def start_capture(self, interface, max_packets):
+        """패킷 캡처를 시작합니다."""
         if self.is_running:
             return False
-
         self.is_running = True
         self.packet_count = 0
         self.max_packets = max_packets
-
         def capture():
             packets = sniff(iface=interface, count=max_packets, prn=self._process_packet, stop_filter=lambda x: not self.is_running)
             self.is_running = False
             self.capture_completed = True
-
         self.sniff_thread = threading.Thread(target=capture)
         self.sniff_thread.start()
         return True
 
     def _process_packet(self, packet):
+        """캡처된 패킷을 처리합니다."""
         if self.packet_count >= self.max_packets:
             self.is_running = False
             return
-
         if IP in packet:
             packet_info = {
                 'no': self.packet_count + 1,
@@ -172,55 +161,31 @@ class PacketCaptureCore:
             self.packet_queue.put(packet_info)
             self.packet_count += 1
 
-    def stop_capture(self):
-        pass  # ... existing code from the second code snippet ...
-
-    def capture_packets(self, interface):
-        pass  # ... existing code from the second code snippet ...
-
     def get_packet_queue(self):
+        """패킷 큐를 반환합니다."""
         return self.packet_queue
 
     def get_packet_count(self):
+        """캡처된 패킷 수를 반환합니다."""
         return self.packet_count
 
-    def load_pcapng_file(self, file_path):
-        pass  # ... existing code from the second code snippet ...
-
-    def check_for_updates(self):
-        
-        pass
-
-class FileLoadThread(QThread):
-    progress = pyqtSignal(int, int)
-    finished = pyqtSignal(bool)
-    error = pyqtSignal(str)
-
-    def __init__(self, core, file_path):
-        super().__init__()
-        self.core = core
-        self.file_path = file_path
-        self.chunk_size = 100
-
-    def run(self):
-        pass
-
+# MainApp 클래스의 리팩터링
 class MainApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("패킷 캡처 애플리케이션")
         self.setWindowIcon(QIcon("icon.png"))
-
         self.core = PacketCaptureCore()
         self.check_for_updates()
-
         self.stacked_widget = QStackedWidget()
         self.setCentralWidget(self.stacked_widget)
-
         self.packet_widget = QWidget()
         packet_layout = QVBoxLayout()
-
         control_layout = QHBoxLayout()
+        back_button = QPushButton("")
+        back_button.setIcon(QIcon.fromTheme("go-previous"))
+        back_button.setFixedSize(30, 30)
+        control_layout.addWidget(back_button)
         interface_label = QLabel("네트워크 인터페이스:")
         self.interface_combo = QComboBox()
         self.interface_combo.addItems(self.core.get_network_interfaces())
@@ -237,43 +202,45 @@ class MainApp(QMainWindow):
         control_layout.addWidget(start_button)
         control_layout.addWidget(stop_button)
         control_layout.addWidget(load_button)
-
         self.status_label = QLabel("상태: 대기 중")
-
         self.packet_table = QTableWidget()
         self.packet_table.setColumnCount(6)
         self.packet_table.setHorizontalHeaderLabels(["No.", "Source", "Destination", "Protocol", "Length", "Info"])
-
+        self.packet_table.horizontalHeader().setStretchLastSection(True)
         packet_layout.addLayout(control_layout)
         packet_layout.addWidget(self.status_label)
         packet_layout.addWidget(self.packet_table)
         self.packet_widget.setLayout(packet_layout)
-
         self.stacked_widget.addWidget(self.packet_widget)
-
         self.setup_timer()
-
         start_button.clicked.connect(self.start_capture)
         stop_button.clicked.connect(self.stop_capture)
         load_button.clicked.connect(self.load_pcapng_file)
 
     def setup_timer(self):
+        """타이머를 설정합니다."""
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update_packet_table)
         self.update_timer.start(200)
 
     def start_capture(self):
+        """패킷 캡처를 시작합니다."""
         selected_interface = self.interface_combo.currentText()
         max_packets = int(self.packet_count_combo.currentText())
         if self.core.start_capture(selected_interface, max_packets):
             self.status_label.setText(f"상태: 캡처 중 (0/{max_packets})")
+            QMessageBox.information(self, "캡처 시작", "패킷 캡처가 시작되었습니다.")
+        else:
+            QMessageBox.warning(self, "캡처 실패", "패킷 캡처를 시작할 수 없습니다.")
 
     def stop_capture(self):
+        """패킷 캡처를 중지합니다."""
         packet_count = self.core.stop_capture()
         self.status_label.setText("상태: 중지됨")
         QMessageBox.information(self, "캡처 완료", f"캡처된 패킷 수: {packet_count}")
 
     def update_packet_table(self):
+        """패킷 테이블을 업데이트합니다."""
         packet_queue = self.core.get_packet_queue()
         new_packets = []
         while not packet_queue.empty():
@@ -295,6 +262,7 @@ class MainApp(QMainWindow):
         self.packet_table.scrollToBottom()
 
     def load_pcapng_file(self):
+        """PCAPNG 파일을 불러옵니다."""
         file_path, _ = QFileDialog.getOpenFileName(self, "pcapng 파일 선택", "", "PCAPNG Files (*.pcapng);;All Files (*)")
         if file_path:
             self.file_load_thread = FileLoadThread(self.core, file_path)
@@ -304,9 +272,11 @@ class MainApp(QMainWindow):
             self.file_load_thread.start()
 
     def update_progress(self, current, total):
+        """진행 상황을 업데이트합니다."""
         self.status_label.setText(f"상태: 파일 로드 중... ({current}/{total})")
 
     def file_load_finished(self, success):
+        """파일 로드가 완료되었을 때 호출됩니다."""
         if success:
             self.status_label.setText(f"상태: 파일 로드 완료 ({self.core.get_packet_count()} 패킷)")
         else:
@@ -314,85 +284,15 @@ class MainApp(QMainWindow):
             QMessageBox.critical(self, "오류", "파일 로드에 실패했습니다.")
 
     def file_load_error(self, error_message):
+        """파일 로드 중 오류가 발생했을 때 호출됩니다."""
         self.status_label.setText("상태: 파일 로드 오류")
         QMessageBox.critical(self, "오류", f"파일 로드 중 오류 발생: {error_message}")
 
     def check_for_updates(self):
-        # 업데이트 확인 및 설치 로직을 여기에 추가합니다.
+        """업데이트를 확인합니다."""
         pass
 
-class TrafficGeneratorApp(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("트래픽 생성기")
-        layout = QVBoxLayout()
-
-        # IP 입력
-        ip_layout = QHBoxLayout()
-        ip_label = QLabel("대상 IP:")
-        self.ip_input = QLineEdit()
-        ip_layout.addWidget(ip_label)
-        ip_layout.addWidget(self.ip_input)
-        layout.addLayout(ip_layout)
-
-        # 트래픽 유형 선택
-        self.syn_flood_checkbox = QCheckBox("SYN 플러드")
-        self.udp_flood_checkbox = QCheckBox("UDP 플러드")
-        self.http_slowloris_checkbox = QCheckBox("HTTP Slowloris")
-        layout.addWidget(self.syn_flood_checkbox)
-        layout.addWidget(self.udp_flood_checkbox)
-        layout.addWidget(self.http_slowloris_checkbox)
-
-        # 패킷 수 및 속도 입력
-        packet_count_layout = QHBoxLayout()
-        packet_count_label = QLabel("패킷 수:")
-        self.packet_count_input = QLineEdit("10")
-        packet_count_layout.addWidget(packet_count_label)
-        packet_count_layout.addWidget(self.packet_count_input)
-        layout.addLayout(packet_count_layout)
-
-        # 패킷 생성 버튼
-        generate_button = QPushButton("패킷 생성 및 전송")
-        generate_button.clicked.connect(self.generate_traffic)
-        layout.addWidget(generate_button)
-
-        self.setLayout(layout)
-
-    def generate_traffic(self):
-        target_ip = self.ip_input.text()
-        packet_count = int(self.packet_count_input.text())
-        if self.is_valid_ip(target_ip):
-            if self.syn_flood_checkbox.isChecked():
-                self.send_syn_flood(target_ip, packet_count)
-            if self.udp_flood_checkbox.isChecked():
-                self.send_udp_flood(target_ip, packet_count)
-            if self.http_slowloris_checkbox.isChecked():
-                self.send_http_slowloris(target_ip, packet_count)
-            print(f"패킷이 {target_ip}로 전송되었습니다.")
-        else:
-            QMessageBox.warning(self, "잘못된 IP", "올바른 IP 주소를 입력하세요.")
-            self.ip_input.clear()
-
-    def is_valid_ip(self, ip):
-        # 간단한 IP 주소 유효성 검사
-        pattern = re.compile("^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
-        return pattern.match(ip) is not None
-
-    def send_syn_flood(self, target_ip, count):
-        packet = IP(dst=target_ip)/TCP(dport=80, flags='S')
-        send(packet, count=count)
-
-    def send_udp_flood(self, target_ip, count):
-        packet = IP(dst=target_ip)/UDP(dport=80)
-        send(packet, count=count)
-
-    def send_http_slowloris(self, target_ip, count):
-        for _ in range(count):
-            threading.Thread(target=self.slowloris_attack, args=(target_ip,)).start()
-
-    def slowloris_attack(self, target_ip):
-        pass
-
+# 메인 함수
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainApp()
