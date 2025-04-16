@@ -96,7 +96,7 @@ class PacketCaptureCore:
         self.packet_queue = queue.Queue(maxsize=100)
         self.is_running = False
         self.packet_count = 0
-        self.max_packets = 1000
+        self.max_packets = 300000
         self.sniff_thread = None
         self.capture_completed = False
 
@@ -136,6 +136,7 @@ class PacketCaptureCore:
         self.is_running = True
         self.packet_count = 0
         self.max_packets = max_packets
+        print(f"Starting packet capture on interface: {interface} with max_packets: {max_packets}")
         def capture():
             packets = sniff(iface=interface, count=max_packets, prn=self._process_packet, stop_filter=lambda x: not self.is_running)
             self.is_running = False
@@ -167,6 +168,15 @@ class PacketCaptureCore:
 
     def get_packet_count(self):
         """캡처된 패킷 수를 반환합니다."""
+        return self.packet_count
+
+    def stop_capture(self):
+        """패킷 캡처를 중지하고 캡처된 패킷 수를 반환합니다."""
+        print("Stopping packet capture...")
+        self.is_running = False
+        if self.sniff_thread is not None:
+            self.sniff_thread.join()  # Ensure the sniffing thread has finished
+        print(f"Packet capture stopped. Total packets captured: {self.packet_count}")
         return self.packet_count
 
 # MainApp 클래스의 리팩터링

@@ -111,10 +111,13 @@ class MainApp(QMainWindow):
         self.interface_combo.addItems(self.core.get_network_interfaces())
         packet_count_label = QLabel("최대 패킷 수:")
         self.packet_count_combo = QComboBox()
-        self.packet_count_combo.addItems(["100", "500", "1000"])
+        self.packet_count_combo.addItems(["100", "500", "1000", "300000"])
         start_button = QPushButton("캡처 시작")
         stop_button = QPushButton("캡처 중지")
         load_button = QPushButton("파일 불러오기")
+        self.save_button = QPushButton("데이터 저장")
+        self.save_button.setEnabled(False)
+        self.save_button.clicked.connect(self.save_captured_data)
         control_layout.addWidget(interface_label)
         control_layout.addWidget(self.interface_combo)
         control_layout.addWidget(packet_count_label)
@@ -122,6 +125,7 @@ class MainApp(QMainWindow):
         control_layout.addWidget(start_button)
         control_layout.addWidget(stop_button)
         control_layout.addWidget(load_button)
+        control_layout.addWidget(self.save_button)
 
         self.status_label = QLabel("상태: 대기 중")
 
@@ -245,14 +249,16 @@ class MainApp(QMainWindow):
         if self.core.start_capture(selected_interface, max_packets):
             self.status_label.setText(f"상태: 캡처 중 (0/{max_packets})")
             QMessageBox.information(self, "캡처 시작", "패킷 캡처가 시작되었습니다.")
+            self.save_button.setEnabled(False)  # Disable save button during capture
         else:
             QMessageBox.warning(self, "캡처 실패", "패킷 캡처를 시작할 수 없습니다.")
 
     def stop_capture(self):
         """패킷 캡처를 중지합니다."""
-        self.core.is_running = False
+        packet_count = self.core.stop_capture()
         self.status_label.setText("상태: 중지됨")
-        QMessageBox.information(self, "캡처 중지", "패킷 캡처가 중지되었습니다.")
+        QMessageBox.information(self, "캡처 완료", f"캡처된 패킷 수: {packet_count}")
+        self.save_button.setEnabled(True)  # Enable save button after capture
 
     def load_pcapng_file(self):
         """PCAPNG 파일을 불러옵니다."""
@@ -263,6 +269,14 @@ class MainApp(QMainWindow):
             self.file_load_thread.finished.connect(self.file_load_finished)
             self.file_load_thread.error.connect(self.file_load_error)
             self.file_load_thread.start()
+
+    def save_captured_data(self):
+        """캡처된 패킷 데이터를 저장합니다."""
+        file_path, _ = QFileDialog.getSaveFileName(self, "파일 저장", "", "CSV Files (*.csv);;All Files (*)")
+        if file_path:
+            dataframe = self.core.get_packet_dataframe()
+            dataframe.to_csv(file_path, index=False)
+            QMessageBox.information(self, "저장 완료", "데이터가 성공적으로 저장되었습니다.")
 
 # 메인 함수.
 if __name__ == "__main__":
