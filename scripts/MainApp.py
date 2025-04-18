@@ -1,7 +1,7 @@
 # 필요한 모듈과 클래스들 임포트
 import sys
 import ctypes
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QVBoxLayout, QWidget, QStackedWidget, QHBoxLayout, QComboBox, QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QVBoxLayout, QWidget, QStackedWidget, QHBoxLayout, QComboBox, QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog, QLineEdit
 from PyQt6.QtGui import QIcon
 from packet_collector import PacketCapture, PacketCaptureCore
 import pandas as pd
@@ -110,8 +110,7 @@ class MainApp(QMainWindow):
         self.interface_combo = QComboBox()
         self.interface_combo.addItems(self.core.get_network_interfaces())
         packet_count_label = QLabel("최대 패킷 수:")
-        self.packet_count_combo = QComboBox()
-        self.packet_count_combo.addItems(["100", "500", "1000", "300000"])
+        self.packet_count_input = QLineEdit("1000")  # 기본값 설정
         start_button = QPushButton("캡처 시작")
         stop_button = QPushButton("캡처 중지")
         load_button = QPushButton("파일 불러오기")
@@ -121,7 +120,7 @@ class MainApp(QMainWindow):
         control_layout.addWidget(interface_label)
         control_layout.addWidget(self.interface_combo)
         control_layout.addWidget(packet_count_label)
-        control_layout.addWidget(self.packet_count_combo)
+        control_layout.addWidget(self.packet_count_input)
         control_layout.addWidget(start_button)
         control_layout.addWidget(stop_button)
         control_layout.addWidget(load_button)
@@ -245,7 +244,7 @@ class MainApp(QMainWindow):
     def start_capture(self):
         """패킷 캡처를 시작합니다."""
         selected_interface = self.interface_combo.currentText()
-        max_packets = int(self.packet_count_combo.currentText())
+        max_packets = int(self.packet_count_input.text())
         if self.core.start_capture(selected_interface, max_packets):
             self.status_label.setText(f"상태: 캡처 중 (0/{max_packets})")
             QMessageBox.information(self, "캡처 시작", "패킷 캡처가 시작되었습니다.")

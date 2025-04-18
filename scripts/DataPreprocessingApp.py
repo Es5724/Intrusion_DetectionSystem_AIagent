@@ -65,6 +65,12 @@ class DataPreprocessingApp(QWidget):
                     data = packet_capture.preprocess_packets(packets)
                 print("데이터 파일이 성공적으로 로드되었습니다.")
                 self.display_data_in_table(data)
+            except pd.errors.EmptyDataError:
+                print("파일이 비어 있습니다.")
+            except pd.errors.ParserError:
+                print("파일을 구문 분석할 수 없습니다.")
+            except FileNotFoundError:
+                print("파일을 찾을 수 없습니다.")
             except Exception as e:
                 print(f"데이터 파일 로드 중 오류 발생: {e}")
 
@@ -108,7 +114,7 @@ class DataPreprocessingApp(QWidget):
         df[['length']] = scaler.fit_transform(df[['length']])
 
         # 범주형 데이터 인코딩
-        encoder = OneHotEncoder(sparse=False)
+        encoder = OneHotEncoder(sparse_output=False)
         protocol_encoded = encoder.fit_transform(df[['protocol']])
         df = df.drop('protocol', axis=1)
         df = pd.concat([df, pd.DataFrame(protocol_encoded, columns=encoder.get_feature_names_out(['protocol']))], axis=1)

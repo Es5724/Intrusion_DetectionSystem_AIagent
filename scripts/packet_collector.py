@@ -87,8 +87,11 @@ class PacketCapture:
         if not os.path.exists('data'):
             os.makedirs('data')
         filepath = os.path.join('data', filename)
-        dataframe.to_csv(filepath, index=False)
-        print(f"데이터가 {filepath}에 저장되었습니다.")
+        try:
+            dataframe.to_csv(filepath, index=False)
+            print(f"데이터가 {filepath}에 저장되었습니다.")
+        except Exception as e:
+            print(f"데이터 저장 중 오류 발생: {e}")
 
 # PacketCaptureCore 클래스의 리팩터링
 class PacketCaptureCore:
@@ -178,6 +181,14 @@ class PacketCaptureCore:
             self.sniff_thread.join()  # Ensure the sniffing thread has finished
         print(f"Packet capture stopped. Total packets captured: {self.packet_count}")
         return self.packet_count
+
+    def get_packet_dataframe(self):
+        """패킷 큐에 있는 데이터를 DataFrame으로 변환합니다."""
+        packets = []
+        while not self.packet_queue.empty():
+            packet = self.packet_queue.get()
+            packets.append(packet)
+        return pd.DataFrame(packets)
 
 # MainApp 클래스의 리팩터링
 class MainApp(QMainWindow):
