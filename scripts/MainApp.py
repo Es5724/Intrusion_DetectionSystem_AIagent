@@ -86,7 +86,7 @@ class MainApp(QMainWindow):
         main_button_data_preprocessing.clicked.connect(self.show_data_preprocessing)
         main_layout.addWidget(main_button_data_preprocessing, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        main_button_ai_training = QPushButton("AI 에이전트 학습")
+        main_button_ai_training = QPushButton("AI 에이전트")
         main_button_ai_training.setFixedSize(button_width, 30)
         main_button_ai_training.clicked.connect(self.show_ai_training)
         main_layout.addWidget(main_button_ai_training, alignment=Qt.AlignmentFlag.AlignCenter)
