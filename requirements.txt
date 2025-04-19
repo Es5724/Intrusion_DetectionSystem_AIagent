@@ -1,2 +1,10 @@
- scapy
-pandas
+pandas>=1.5.0
+scikit-learn>=1.0.0
+joblib>=1.1.0
+matplotlib>=3.5.0
+seaborn>=0.11.0
+numpy>=1.21.0
+scapy>=2.4.5
+psutil>=5.8.0
+PyQt6>=6.4.0
+tk>=0.1.0

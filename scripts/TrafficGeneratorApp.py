@@ -12,6 +12,8 @@ import sys
 import json
 from PyQt6.QtCore import Qt
 
+#이하 기능들 전부  AI에이전트로 옮겨야함
+
 # SYN 플러드 공격을 수행하는 함수.
 def syn_flood(target_ip, packet_count, packet_size, stop_flag):
     for _ in range(packet_count):
