@@ -407,23 +407,38 @@ class MLTrainingWindow:
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.confusion_frame)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         
-    def update_status(self, message):
-        self.status_label.config(text=message)
-        self.log_text.insert(tk.END, f"{datetime.now().strftime('%H:%M:%S')} - {message}\n")
-        self.log_text.see(tk.END)
-        self.root.update()
+        # GUI 업데이트를 위한 큐 생성
+        self.gui_queue = queue.Queue()
         
-    def update_metrics(self, accuracy, conf_matrix):
-        self.accuracy_label.config(text=f"정확도: {accuracy:.4f}")
-        
-        # 혼동 행렬 시각화
-        self.figure.clear()
-        ax = self.figure.add_subplot(111)
-        sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', ax=ax)
-        ax.set_xlabel('예측 레이블')
-        ax.set_ylabel('실제 레이블')
-        self.canvas.draw()
-        
+        # process_gui_queue 호출
+        self.process_gui_queue()
+
+    def process_gui_queue(self):
+        try:
+            while not self.gui_queue.empty():
+                task = self.gui_queue.get_nowait()
+                if task[0] == 'deiconify':
+                    self.root.deiconify()
+                elif task[0] == 'update_status':
+                    self.status_label.config(text=task[1])
+                    self.log_text.insert(tk.END, f"{datetime.now().strftime('%H:%M:%S')} - {task[1]}\n")
+                    self.log_text.see(tk.END)
+                elif task[0] == 'update_metrics':
+                    accuracy = task[1]
+                    conf_matrix = task[2]
+                    self.accuracy_label.config(text=f"정확도: {accuracy:.4f}")
+                    
+                    # 혼동 행렬 시각화
+                    self.figure.clear()
+                    ax = self.figure.add_subplot(111)
+                    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', ax=ax)
+                    ax.set_xlabel('예측 레이블')
+                    ax.set_ylabel('실제 레이블')
+                    self.canvas.draw()
+        except queue.Empty:
+            pass
+        self.root.after(100, self.process_gui_queue)  # 100ms마다 큐 확인
+
     def show(self):
         self.root.mainloop()
 
@@ -652,64 +667,65 @@ def main():
                 while packet_core.is_running:
                     preprocessed_data_path = 'data_set/전처리데이터1.csv'
                     if os.path.exists(preprocessed_data_path):
-                        ml_window.root.deiconify()  # 학습 시작 시 창 표시
-                        ml_window.update_status("데이터 파일 감지됨 - 머신러닝 모델 학습 시작")
+                        # GUI 업데이트는 큐를 통해 요청
+                        ml_window.gui_queue.put(('deiconify',))  # 학습 시작 시 창 표시
+                        ml_window.gui_queue.put(('update_status', "데이터 파일 감지됨 - 머신러닝 모델 학습 시작"))
                         try:
                             # 데이터 로드 및 전처리
-                            ml_window.update_status("데이터 파일 로드 중...")
+                            ml_window.gui_queue.put(('update_status', "데이터 파일 로드 중..."))
                             preprocessed_df = pd.read_csv(preprocessed_data_path)
-                            ml_window.update_status(f"데이터 로드 완료 - 크기: {preprocessed_df.shape}")
+                            ml_window.gui_queue.put(('update_status', f"데이터 로드 완료 - 크기: {preprocessed_df.shape}"))
                             
                             # 문자열 데이터를 숫자로 변환
-                            ml_window.update_status("문자열 데이터 변환 시작")
+                            ml_window.gui_queue.put(('update_status', "문자열 데이터 변환 시작"))
                             for column in preprocessed_df.columns:
                                 if preprocessed_df[column].dtype == 'object':
                                     label_encoder = LabelEncoder()
                                     preprocessed_df[column] = label_encoder.fit_transform(preprocessed_df[column].astype(str))
-                            ml_window.update_status("문자열 데이터 변환 완료")
+                            ml_window.gui_queue.put(('update_status', "문자열 데이터 변환 완료"))
 
                             # 특성과 레이블 분리
-                            ml_window.update_status("특성과 레이블 분리 시작")
+                            ml_window.gui_queue.put(('update_status', "특성과 레이블 분리 시작"))
                             X = preprocessed_df.drop('protocol_6', axis=1)
                             y = preprocessed_df['protocol_6']
-                            ml_window.update_status(f"특성 크기: {X.shape}, 레이블 크기: {y.shape}")
+                            ml_window.gui_queue.put(('update_status', f"특성 크기: {X.shape}, 레이블 크기: {y.shape}"))
 
                             # 데이터 분할
-                            ml_window.update_status("데이터 분할 시작")
+                            ml_window.gui_queue.put(('update_status', "데이터 분할 시작"))
                             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-                            ml_window.update_status(f"학습 데이터 크기: {X_train.shape}, 테스트 데이터 크기: {X_test.shape}")
+                            ml_window.gui_queue.put(('update_status', f"학습 데이터 크기: {X_train.shape}, 테스트 데이터 크기: {X_test.shape}"))
 
                             # 데이터 스케일링
-                            ml_window.update_status("데이터 스케일링 시작")
+                            ml_window.gui_queue.put(('update_status', "데이터 스케일링 시작"))
                             scaler = StandardScaler()
                             X_train = scaler.fit_transform(X_train)
                             X_test = scaler.transform(X_test)
-                            ml_window.update_status("데이터 스케일링 완료")
+                            ml_window.gui_queue.put(('update_status', "데이터 스케일링 완료"))
 
                             # 모델 학습
-                            ml_window.update_status("모델 학습 시작")
+                            ml_window.gui_queue.put(('update_status', "모델 학습 시작"))
                             model = RandomForestClassifier(n_estimators=100, random_state=42)
                             model.fit(X_train, y_train)
-                            ml_window.update_status("모델 학습 완료")
+                            ml_window.gui_queue.put(('update_status', "모델 학습 완료"))
 
                             # 모델 평가
-                            ml_window.update_status("모델 평가 시작")
+                            ml_window.gui_queue.put(('update_status', "모델 평가 시작"))
                             predictions = model.predict(X_test)
                             accuracy = accuracy_score(y_test, predictions)
                             conf_matrix = confusion_matrix(y_test, predictions)
-                            ml_window.update_status(f"모델 평가 완료 - 정확도: {accuracy}")
+                            ml_window.gui_queue.put(('update_status', f"모델 평가 완료 - 정확도: {accuracy}"))
 
                             # 모델 저장
-                            ml_window.update_status("모델 저장 시작")
+                            ml_window.gui_queue.put(('update_status', "모델 저장 시작"))
                             joblib.dump(model, 'random_forest_model.pkl')
-                            ml_window.update_status("모델 저장 완료")
+                            ml_window.gui_queue.put(('update_status', "모델 저장 완료"))
                             
                             # 성능 지표 업데이트
-                            ml_window.update_metrics(accuracy, conf_matrix)
-                            ml_window.update_status("학습 완료!")
+                            ml_window.gui_queue.put(('update_metrics', accuracy, conf_matrix))
+                            ml_window.gui_queue.put(('update_status', "학습 완료!"))
                             
                         except Exception as e:
-                            ml_window.update_status(f"모델 학습 중 오류 발생: {str(e)}")
+                            ml_window.gui_queue.put(('update_status', f"모델 학습 중 오류 발생: {str(e)}"))
                     else:
                         print("디버그: 데이터 파일이 아직 생성되지 않음")
                     time.sleep(60)  # 1분마다 데이터 파일 확인
@@ -717,6 +733,9 @@ def main():
             train_thread = threading.Thread(target=monitor_and_train)
             train_thread.daemon = True
             train_thread.start()
+            
+            # MLTrainingWindow 초기화 시 process_gui_queue 호출
+            ml_window.process_gui_queue()
             
             try:
                 while True:
