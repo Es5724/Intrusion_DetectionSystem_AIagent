@@ -1,6 +1,6 @@
 #반응형 취약점 차단 AI 에이전트
 
-개요  : AI에이전트가 시스템의 보안 취약점을 찾아 위험요소를 찾아 학습 및 차단하는 시스템템
+개요  : AI에이전트가 시스템의 보안 취약점을 찾아 위험요소를 찾아 학습 및 차단하는 시스템
 
 
 PacketCapture 클래스:
@@ -86,8 +86,8 @@ update_metrics(): 성능 지표를 업데이트합니다.
 
 +-----------------------+
 |   PacketCapture       |
-+-----------------------+
 
++-----------------------+
 | - interface           |
 | - count               |
 |-----------------------|
@@ -96,7 +96,6 @@ update_metrics(): 성능 지표를 업데이트합니다.
 | + _get_packet_info()  |
 | + _get_tcp_flags()    |
 | + save_to_csv()     
-
 +-----------------------+
          |
          v
@@ -105,6 +104,7 @@ update_metrics(): 성능 지표를 업데이트합니다.
 |   PacketCaptureCore   |
   
 +-----------------------+
+
 | - packet_queue        |
 | - is_running          |
 | - packet_count        |
@@ -129,6 +129,7 @@ update_metrics(): 성능 지표를 업데이트합니다.
 |   MLTrainingWindow    |
 
 +-----------------------+
+
 | - root                |
 | - status_frame        |
 | - log_frame           |
