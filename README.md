@@ -1,3 +1,8 @@
+#반응형 취약점 차단 AI 에이전트
+
+개요  : AI에이전트가 시스템의 보안 취약점을 찾아 위험요소를 찾아 학습 및 차단하는 시스템템
+
+
 PacketCapture 클래스:
 속성:
 interface: 패킷을 캡처할 네트워크 인터페이스.
@@ -42,20 +47,25 @@ update_metrics(): 성능 지표를 업데이트합니다.
 
 +-----------------------+
 |   PacketCapture       |
+
 +-----------------------+
-| - interface           |
+| - interface       
+    |
 | - count               |
 |-----------------------|
 | + capture_packets()   |
 | + preprocess_packets()|
 | + _get_packet_info()  |
 | + _get_tcp_flags()    |
-| + save_to_csv()       |
+| + save_to_csv()     
+  |
 +-----------------------+
          |
          v
 +-----------------------+
-|   PacketCaptureCore   |
+|   PacketCaptureCore 
+  
+
 +-----------------------+
 | - packet_queue        |
 | - is_running          |
@@ -72,11 +82,13 @@ update_metrics(): 성능 지표를 업데이트합니다.
 | + get_packet_count()  |
 | + get_packet_dataframe() |
 | + _process_packet()   |
+
 +-----------------------+
          |
          v
 +-----------------------+
 |   MLTrainingWindow    |
+
 +-----------------------+
 | - root                |
 | - status_frame        |
@@ -89,4 +101,5 @@ update_metrics(): 성능 지표를 업데이트합니다.
 | + show()              |
 | + update_status()     |
 | + update_metrics()    |
+
 +-----------------------+
