@@ -257,6 +257,11 @@ class PacketCaptureCore:
 
     def check_npcap(self):
         """Npcap 설치 여부를 확인합니다."""
+        # 윈도우 환경이 아닌 경우 Npcap 확인 불필요
+        if os.name != 'nt':
+            print("윈도우 환경이 아니므로 Npcap 확인을 건너뜁니다.")
+            return True
+            
         try:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SOFTWARE\Npcap')
             winreg.CloseKey(key)
