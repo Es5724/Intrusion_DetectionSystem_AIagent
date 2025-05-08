@@ -1,8 +1,8 @@
 # 반응형 취약점 차단 AI 에이전트
 
 ## 0. 목차
-1. [개요](#1-개요)
-2. [사용한 모듈](#2-사용한-모듈)
+[1] [개요](#1-개요)
+[2] [사용한 모듈](#2-사용한-모듈)
 
 ## 1. 개요
 AI 에이전트가 네트워크 보안 취약점 학습(차단) 하는 시스템입니다.
@@ -14,8 +14,8 @@ AI 에이전트가 네트워크 보안 취약점 학습(차단) 하는 시스템
 **민인영** : 데이터 학습, 웹 제작   
 
 ## 2. 사용한 모듈
-1. [메인 모듈](#1-메인-모듈)
-2. [서브 모듈](#2-서브-모듈)
+[1] [메인 모듈](#1-메인-모듈)
+[2] [서브 모듈](#2-서브-모듈)
 
 ### (1) 메인 모듈
 - [데이터 분석]
@@ -42,43 +42,25 @@ AI 에이전트가 네트워크 보안 취약점 학습(차단) 하는 시스템
     - **sklearn**
         - RandomForestClassifier : 랜덤으로 샘플링하여 훈련세트 만들어 학습
         - train_test_split : 데이터를 학습용과 테스트용으로 자동 분할
-        - accuracy_score :
-        - confusion matrix : 
+        - accuracy_score : 예측한 값이 얼마나 일치하는지 백분율로 계산
+        - confusion matrix : 예측한 값이 얼마나 정확하게 분류했는지 계산
+        - StandardScaler : 평균 0, 표준편차 1로 모든 특성 값 표준화
+        - LabelEncoder : 문자형 데이터를 정수형 숫자로 변환
 - [시각화]
     - **matplotlib**
         - FigureCanvasTkAgg : 
         - Figure : 
         - 
 
-## 사용된 모듈 및 라이브러리
-
-### 데이터 처리 및 분석 관련 모듈
-- **pandas (pd)**: 데이터 구조 및 분석을 위한 라이브러리. 패킷 데이터를 DataFrame으로 변환하고 처리하는 데 사용
-- **numpy (np)**: 수치 계산을 위한 라이브러리. 행렬 및 배열 연산에 사용
-
-### 머신러닝 관련 모듈
-- **sklearn.ensemble.RandomForestClassifier**: 랜덤 포레스트 분류 알고리즘 구현. 악성 패킷 탐지에 사용
-- **sklearn.model_selection.train_test_split**: 데이터를 학습용과 테스트용으로 분할하는 함수
-- **sklearn.metrics.accuracy_score, confusion_matrix**: 모델 성능 평가를 위한 지표 계산
-- **sklearn.preprocessing.StandardScaler, LabelEncoder**: 특성 스케일링 및 범주형 데이터 인코딩
-- **joblib**: 모델을 파일로 저장하고 로드하는 데 사용
-
-### 시각화 관련 모듈
-- **matplotlib.pyplot (plt)**: 그래프 및 차트 생성을 위한 라이브러리
-- **seaborn (sns)**: 통계 데이터 시각화 라이브러리. 혼동 행렬 시각화에 사용
 - **matplotlib.backends.backend_tkagg.FigureCanvasTkAgg**: Tkinter GUI에 matplotlib 그림을 표시하기 위한 클래스
 - **matplotlib.figure.Figure**: matplotlib 그림 객체 생성
 
 ### 네트워크 및 패킷 캡처 관련 모듈
-- **socket**: 네트워크 통신을 위한 저수준 인터페이스
 - **scapy.all.sniff, IP, TCP, UDP, ICMP**: 패킷 캡처 및 분석을 위한 라이브러리
 - **scapy.layers.inet.IP, TCP**: IP 및 TCP 프로토콜 처리
 - **scapy.sendrecv.sr1, send**: 패킷 전송 및 응답 수신 기능
 
 ### 시스템 및 OS 관련 모듈
-- **os**: 운영체제 관련 기능. 파일 경로 조작, 운영체제 확인, 명령어 실행 등
-- **sys**: 시스템 관련 파라미터 및 함수. 종료, 인자 처리 등
-- **ctypes**: C 호환 데이터 타입 및 함수 호출. 관리자 권한 확인에 사용
 - **psutil**: 시스템 모니터링. 네트워크 인터페이스 정보 획득에 사용
 - **winreg**: Windows 레지스트리 접근. Npcap 설치 확인에 사용
 
