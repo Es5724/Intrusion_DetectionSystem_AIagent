@@ -192,8 +192,9 @@ class PacketCaptureCore:
 
 # MainApp 클래스의 리팩터링
 class MainApp(QMainWindow):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_app = parent
         self.setWindowTitle("패킷 캡처 애플리케이션")
         self.setWindowIcon(QIcon("icon.png"))
         self.core = PacketCaptureCore()
@@ -203,10 +204,14 @@ class MainApp(QMainWindow):
         self.packet_widget = QWidget()
         packet_layout = QVBoxLayout()
         control_layout = QHBoxLayout()
-        back_button = QPushButton("")
-        back_button.setIcon(QIcon.fromTheme("go-previous"))
-        back_button.setFixedSize(30, 30)
-        control_layout.addWidget(back_button)
+        
+        # 뒤로가기 버튼 수정
+        self.back_button = QPushButton("")
+        self.back_button.setIcon(QIcon.fromTheme("go-previous"))
+        self.back_button.setFixedSize(30, 30)
+        self.back_button.clicked.connect(self.go_back)  # 뒤로가기 기능 연결
+        control_layout.addWidget(self.back_button)
+        
         interface_label = QLabel("네트워크 인터페이스:")
         self.interface_combo = QComboBox()
         self.interface_combo.addItems(self.core.get_network_interfaces())
@@ -237,7 +242,11 @@ class MainApp(QMainWindow):
         start_button.clicked.connect(self.start_capture)
         stop_button.clicked.connect(self.stop_capture)
         load_button.clicked.connect(self.load_pcapng_file)
-
+        
+        # 처음에는 뒤로가기 버튼 비활성화 (메인 앱이 없을 경우)
+        if self.parent_app is None:
+            self.back_button.setVisible(False)
+    
     def setup_timer(self):
         """타이머를 설정합니다."""
         self.update_timer = QTimer()
@@ -312,6 +321,20 @@ class MainApp(QMainWindow):
     def check_for_updates(self):
         """업데이트를 확인합니다."""
         pass
+
+    def go_back(self):
+        """메인 화면으로 돌아가기"""
+        if self.parent_app:
+            try:
+                # 캡처 중이라면 중지
+                if self.core.is_running:
+                    self.stop_capture()
+                    
+                # 부모 앱의 메인 화면 표시 메서드 호출
+                self.parent_app.show_main_screen()
+            except Exception as e:
+                print(f"뒤로가기 중 오류 발생: {e}")
+                QMessageBox.warning(self, "오류", "뒤로가기 실패")
 
 # 메인 함수
 if __name__ == "__main__":
