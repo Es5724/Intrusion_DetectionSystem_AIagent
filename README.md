@@ -23,6 +23,8 @@
 
 ## 1. 📌프로젝트 개요
 
+### 💡 핵심 개념
+
 실시간으로 네트워크 보안 취약점을 탐지하고 자동으로 대응하는 AI 기반 침입 탐지 시스템이다.   
 랜덤 포레스트와 강화학습의 장점을 결합한 하이브리드 접근 방식을 통해 기존 방식보다 높은 정확도와 적응성을 제공 한다.
 
@@ -53,6 +55,38 @@
     ├── 📄 ml_models.py                  # 머신러닝 모델
     ├── 📄 packet_capture.py             # 패킷 캡처 기능
     └── 📄 utils.py                      # 유틸리티 함수
+```
+
+```mermaid
+graph TD
+    A[IDSAgent_RL.py] --> B[modules/]
+    A --> C[scripts/]
+    
+    B --> D[reinforcement_learning.py]
+    B --> E[ml_models.py]
+    B --> F[packet_capture.py]
+    B --> G[utils.py]
+    
+    C --> H[data_preparation.py]
+    C --> I[components/]
+    
+    I --> J[packet_collector.py]
+    I --> K[TrafficGeneratorApp.py]
+    I --> L[DataPreprocessingApp.py]
+    
+    D -.-> E
+    F -.-> E
+    H -.-> J
+    H -.-> K
+    H -.-> L
+    
+    classDef main fill:#f96,stroke:#333,stroke-width:2px,color:white;
+    classDef module fill:#6c8ebf,stroke:#333,stroke-width:1px,color:white;
+    classDef component fill:#d5e8d4,stroke:#82b366,stroke-width:1px,color:black;
+    
+    class A main;
+    class B,C,D,E,F,G module;
+    class H,I,J,K,L component;
 ```
 
 ## 🛠️ 사용된 모듈 및 라이브러리
