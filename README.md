@@ -98,32 +98,37 @@ Intrusion_DetectionSystem/
 ```mermaid
 graph TB
     %% 단순한 단계 정의
-    s1(1-데이터수집) --> s2(2-데이터전처리)
-    s2 --> s3(3-모델학습)
-    s3 --> s4(4-강화학습통합)
-    s4 --> s5(5-실시간탐지)
-    s5 --> s6(6-모델업데이트)
+    s1[1-데이터수집] --> s2[2-데이터전처리]
+    s2 --> s3[3-모델학습]
+    s3 --> s4[4-강화학습통합]
+    s4 --> s5[5-실시간탐지]
+    s5 --> s6[6-모델업데이트]
     s6 -.-> s1
     
     %% 세부 과정
     subgraph 수집[데이터 수집]
-        i1(네트워크 캡처) --> i2(트래픽 생성)
+        direction TB
+        i1[네트워크 캡처] --> i2[트래픽 생성]
     end
     
     subgraph 전처리[데이터 전처리]
-        p1(특성 추출) --> p2(정규화) --> p3(인코딩)
+        direction TB
+        p1[특성 추출] --> p2[정규화] --> p3[인코딩]
     end
     
     subgraph 학습[모델 학습]
-        m1(랜덤 포레스트) --> m2(성능 평가)
+        direction TB
+        m1[랜덤 포레스트] --> m2[성능 평가]
     end
     
     subgraph 통합[강화학습 통합]
-        r1(상태 정의) --> r2(DQN) --> r3(액션)
+        direction TB
+        r1[상태 정의] --> r2[DQN] --> r3[액션]
     end
     
     subgraph 적용[실시간 적용]
-        a1(모니터링) --> a2(분석) --> a3(대응)
+        direction TB
+        a1[모니터링] --> a2[분석] --> a3[대응]
     end
     
     %% 연결
@@ -134,18 +139,35 @@ graph TB
     s5 --- 적용
     
     %% 스타일
-    style s1 fill:#f96,color:white,stroke:#333
-    style s2 fill:#f96,color:white,stroke:#333
-    style s3 fill:#f96,color:white,stroke:#333
-    style s4 fill:#f96,color:white,stroke:#333
-    style s5 fill:#f96,color:white,stroke:#333
-    style s6 fill:#f96,color:white,stroke:#333
+    style s1 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
+    style s2 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
+    style s3 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
+    style s4 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
+    style s5 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
+    style s6 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
     
-    style 수집 fill:#e6f7ff,stroke:#333
-    style 전처리 fill:#e6f7ff,stroke:#333
-    style 학습 fill:#e6f7ff,stroke:#333
-    style 통합 fill:#e6f7ff,stroke:#333
-    style 적용 fill:#e6f7ff,stroke:#333
+    style 수집 fill:#e6f7ff,stroke:#333,stroke-width:2px
+    style 전처리 fill:#e6f7ff,stroke:#333,stroke-width:2px
+    style 학습 fill:#e6f7ff,stroke:#333,stroke-width:2px
+    style 통합 fill:#e6f7ff,stroke:#333,stroke-width:2px
+    style 적용 fill:#e6f7ff,stroke:#333,stroke-width:2px
+    
+    style i1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style i2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style p1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style p2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style p3 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style m1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style m2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style r1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style r2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style r3 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style a1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style a2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style a3 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    
+    %% 전체 연결선 스타일
+    linkStyle default stroke:#333,stroke-width:2px
 ```
 
 ## 🌟 하이브리드 접근 방식의 특징
