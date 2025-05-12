@@ -148,17 +148,104 @@ Intrusion_DetectionSystem/
 
 ## 🔄 AI 에이전트 작동 방식
 
+### 1. 데이터 수집
+- 네트워크 인터페이스에서 실시간으로 패킷을 캡처
+- 공격성 트래픽 생성 어플리케이션으로 학습용 데이터 생성
+
+### 2. 데이터 전처리
+- 패킷 데이터에서 중요 특성 추출 (출발지 IP, 목적지 IP, 프로토콜, 길이 등)
+- 결측치 처리, 데이터 정규화, 범주형 데이터 인코딩
+
+### 3. 모델 학습
+- 랜덤 포레스트 알고리즘으로 분류 모델 학습
+- 정상 트래픽과 공격성 트래픽을 구분하는 패턴 학습
+
+### 4. 강화학습 통합
+- 랜덤 포레스트의 예측 결과를 강화학습 에이전트의 상태(state)로 활용
+- DQN(Deep Q-Network)을 통해 최적의 대응 정책 학습
+- 액션 공간: 허용(0), 차단(1), 모니터링(2)
+
+### 5. 실시간 탐지 및 차단
+- 실시간 네트워크 트래픽 모니터링 및 분석
+- DQN 에이전트의 결정에 따른 자동 대응 조치 수행
+
+### 6. 모델 업데이트
+- 새로운 데이터를 지속적으로 수집하여 모델 재학습
+- 변화하는 네트워크 환경에 적응
+
 ```mermaid
-flowchart TD
-    A("데이터 수집") --> B("데이터 전처리")
-    B --> C("모델 학습")
-    C --> D("강화학습 통합")
-    D --> E("실시간 탐지")
-    E --> F("모델 업데이트")
-    F -.-> A
+graph TB
+    %% 단순한 단계 정의
+    s1[1-데이터수집] --> s2[2-데이터전처리]
+    s2 --> s3[3-모델학습]
+    s3 --> s4[4-강화학습통합]
+    s4 --> s5[5-실시간탐지]
+    s5 --> s6[6-모델업데이트]
+    s6 -.-> s1
     
-    classDef main fill:#f96,color:#fff,stroke:#333,stroke-width:1px;
-    class A,B,C,D,E,F main;
+    %% 세부 과정
+    subgraph 수집[데이터 수집]
+        direction TB
+        i1[네트워크 캡처] --> i2[트래픽 생성]
+    end
+    
+    subgraph 전처리[데이터 전처리]
+        direction TB
+        p1[특성 추출] --> p2[정규화] --> p3[인코딩]
+    end
+    
+    subgraph 학습[모델 학습]
+        direction TB
+        m1[랜덤 포레스트] --> m2[성능 평가]
+    end
+    
+    subgraph 통합[강화학습 통합]
+        direction TB
+        r1[상태 정의] --> r2[DQN] --> r3[액션]
+    end
+    
+    subgraph 적용[실시간 적용]
+        direction TB
+        a1[모니터링] --> a2[분석] --> a3[대응]
+    end
+    
+    %% 연결
+    s1 --- 수집
+    s2 --- 전처리
+    s3 --- 학습
+    s4 --- 통합
+    s5 --- 적용
+    
+    %% 스타일
+    style s1 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
+    style s2 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
+    style s3 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
+    style s4 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
+    style s5 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
+    style s6 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
+    
+    style 수집 fill:#e6f7ff,stroke:#333,stroke-width:2px
+    style 전처리 fill:#e6f7ff,stroke:#333,stroke-width:2px
+    style 학습 fill:#e6f7ff,stroke:#333,stroke-width:2px
+    style 통합 fill:#e6f7ff,stroke:#333,stroke-width:2px
+    style 적용 fill:#e6f7ff,stroke:#333,stroke-width:2px
+    
+    style i1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style i2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style p1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style p2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style p3 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style m1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style m2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style r1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style r2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style r3 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style a1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style a2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    style a3 fill:#f2f2f2,stroke:#333,width:100px,height:50px
+    
+    %% 전체 연결선 스타일
+    linkStyle default stroke:#333,stroke-width:2px
 ```
 
 <<<<<<< HEAD
@@ -176,17 +263,16 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A("패킷 데이터") --> B("랜덤 포레스트 1차 분류")
-    B --> C("분류 결과를 특성으로 추가")
-    C --> D("강화학습 환경 상태로 활용")
-    D --> E("DQN 에이전트")
-    E --> F("최적의 대응 조치 선택")
+    packet["패킷 데이터"] --> rf["랜덤 포레스트 1차 분류"]
+    rf --> feature["분류 결과를 특성으로 추가"]
+    feature --> state["강화학습 환경 상태로 활용"]
+    state --> dqn["DQN 에이전트"]
+    dqn --> action["최적의 대응 조치 선택"]
     
-    classDef primary fill:#f96,color:#fff,stroke:#333,stroke-width:2px;
-    classDef secondary fill:#f2f2f2,color:#000,stroke:#333,stroke-width:1px;
-    
-    class B,E primary;
-    class A,C,D,F secondary;
+    classDef highlight fill:#f96,stroke:#333,stroke-width:2px,color:white;
+    classDef normal fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black;
+    class dqn,rf highlight
+    class packet,feature,state,action normal
 ```
 
 1. **랜덤 포레스트 1차 분류**: 패킷 데이터를 랜덤 포레스트로 1차적으로 분류
