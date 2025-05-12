@@ -410,7 +410,7 @@ flowchart TB
     classDef moduleHeader fill:#f96,stroke:#333,stroke-width:2px,color:white;
     class main moduleHeader
     
-    classDef nodeText fill:#f2f2f2,stroke:#333,stroke-width:1px,color:white;
+    classDef nodeText fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black;
     class collector,generator,preprocessing,features,ml,rf,eval,env,agent,train,reinforce,dqn,detect,prep,components,visual nodeText;
     
     classDef subgraphText fill:transparent,color:black;
