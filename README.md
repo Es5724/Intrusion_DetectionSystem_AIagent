@@ -59,34 +59,62 @@
 
 ```mermaid
 graph TD
+    %% 메인 모듈
     A[IDSAgent_RL.py] --> B[modules/]
     A --> C[scripts/]
     
+    %% 모듈 세부 구성
     B --> D[reinforcement_learning.py]
     B --> E[ml_models.py]
     B --> F[packet_capture.py]
     B --> G[utils.py]
     
+    %% 스크립트 세부 구성
     C --> H[data_preparation.py]
     C --> I[components/]
     
+    %% 컴포넌트 세부 구성
     I --> J[packet_collector.py]
     I --> K[TrafficGeneratorApp.py]
     I --> L[DataPreprocessingApp.py]
     
-    D -.-> E
-    F -.-> E
-    H -.-> J
-    H -.-> K
-    H -.-> L
+    %% 데이터 흐름 관계
+    D -.-> |"모델 정보 활용"| E
+    F -.-> |"패킷 데이터 제공"| E
+    H -.-> |"UI 제어"| J
+    H -.-> |"UI 제어"| K
+    H -.-> |"UI 제어"| L
     
+    %% 모듈 기능 설명
+    A -.-> |"시스템 핵심"|
+    D -.-> |"DQN 모델"|
+    E -.-> |"랜덤 포레스트"|
+    F -.-> |"스캐피 패킷 캡처"|
+    
+    %% 스타일 정의
     classDef main fill:#f96,stroke:#333,stroke-width:2px,color:white;
     classDef module fill:#6c8ebf,stroke:#333,stroke-width:1px,color:white;
     classDef component fill:#d5e8d4,stroke:#82b366,stroke-width:1px,color:black;
     
+    %% 스타일 적용
     class A main;
     class B,C,D,E,F,G module;
     class H,I,J,K,L component;
+    
+    %% 노드 그룹화
+    subgraph "핵심 모듈"
+        A
+    end
+    
+    subgraph "데이터 처리"
+        E
+        F
+        L
+    end
+    
+    subgraph "AI 구성요소"
+        D
+    end
 ```
 
 ## 🛠️ 사용된 모듈 및 라이브러리
