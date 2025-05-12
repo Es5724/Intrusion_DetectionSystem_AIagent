@@ -146,8 +146,10 @@ flowchart TB
     classDef mainStep fill:#f96,stroke:#333,stroke-width:2px,color:black;
     class step1,step2,step3,step4,step5,step6 mainStep;
     
-    classDef processBox fill:#e6f7ff,stroke:#333,stroke-width:1px;
+    classDef processBox fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black;
     class collection,preprocessing,training,rl_integration,detection processBox;
+    
+    classDef default color:black;
     
     linkStyle default stroke:#333,stroke-width:1.5px;
     linkStyle 5 stroke:#333,stroke-width:1.5px,stroke-dasharray:5;
@@ -158,23 +160,17 @@ flowchart TB
 본 시스템은 랜덤 포레스트와 강화학습을 결합한 하이브리드 접근 방식을 사용합니다:
 
 ```mermaid
-flowchart LR
-    %% 기본 구성 요소
-    packet[패킷 데이터] --> rf[랜덤 포레스트\n1차 분류]
-    rf --> feature[분류 결과를\n특성으로 추가]
-    feature --> state[강화학습 환경\n상태로 활용]
+flowchart TD
+    packet[패킷 데이터] --> rf[랜덤 포레스트 1차 분류]
+    rf --> feature[분류 결과를 특성으로 추가]
+    feature --> state[강화학습 환경 상태로 활용]
     state --> dqn[DQN 에이전트]
-    dqn --> action[최적의 대응\n조치 선택]
+    dqn --> action[최적의 대응 조치 선택]
     
-    %% 스타일 정의
-    classDef highlight fill:#f96,stroke:#333,stroke-width:2px;
+    classDef highlight fill:#f96,stroke:#333,stroke-width:2px,color:black;
+    classDef normal color:black;
     class dqn,rf highlight
-    
-    classDef normal fill:#e6f7ff,stroke:#333;
     class packet,feature,state,action normal
-    
-    %% 선 스타일
-    linkStyle default stroke:#333,stroke-width:1.5px;
 ```
 
 1. **랜덤 포레스트 1차 분류**: 패킷 데이터를 랜덤 포레스트로 1차적으로 분류
@@ -281,64 +277,43 @@ DQNAgent 클래스는 심층 Q 네트워크를 구현하여 패킷에 대한 최
 
 ```mermaid
 flowchart LR
-    %% 각 단계별 노드 정의
-    stage1[1. 데이터 수집 단계]
-    stage2[2. 데이터 전처리 단계]
-    stage3[3. 모델 학습 단계]
-    stage4[4. 강화학습 통합 단계]
-    stage5[5. 실시간 적용 단계]
-    
-    %% 단계별 흐름
-    stage1 --> stage2 --> stage3 --> stage4 --> stage5
-    
-    %% 각 단계 내부 정의
-    subgraph 데이터수집[데이터 수집]
-        direction TB
+    subgraph 데이터수집[1. 데이터 수집 단계]
         packet[packet_collector.py]
         traffic[TrafficGeneratorApp.py]
         packet --> traffic
     end
-    
-    subgraph 전처리[데이터 전처리]
-        direction TB
+
+    subgraph 전처리[2. 데이터 전처리 단계]
         preprocess[DataPreprocessingApp.py]
         feature[특성 추출 및 가공]
         preprocess --> feature
     end
-    
-    subgraph 모델학습[모델 학습]
-        direction TB
+
+    subgraph 모델학습[3. 모델 학습 단계]
         ml[ml_models.py]
         evaluation[성능 평가 및 시각화]
         ml --> evaluation
     end
-    
-    subgraph 강화학습[강화학습 통합]
-        direction TB
+
+    subgraph 강화학습[4. 강화학습 통합 단계]
         env[NetworkEnv]
         dqn[DQNAgent]
         env --> dqn
     end
-    
-    subgraph 실시간적용[실시간 적용]
-        direction TB
+
+    subgraph 실시간적용[5. 실시간 적용 단계]
         agent[IDSAgent_RL.py]
         response[위협 탐지 및 자동 대응]
         agent --> response
     end
+
+    데이터수집 --> 전처리
+    전처리 --> 모델학습
+    모델학습 --> 강화학습
+    강화학습 --> 실시간적용
     
-    %% 연결
-    stage1 --- 데이터수집
-    stage2 --- 전처리
-    stage3 --- 모델학습
-    stage4 --- 강화학습
-    stage5 --- 실시간적용
-    
-    %% 스타일 정의
-    classDef stageClass fill:#f96,stroke:#333,stroke-width:2px;
-    class stage1,stage2,stage3,stage4,stage5 stageClass
-    
-    linkStyle default stroke:#333,stroke-width:1.5px;
+    classDef default color:black;
+    classDef stageClass color:black;
 ```
 
 1. **데이터 수집 단계**:
@@ -413,8 +388,10 @@ flowchart TB
     realtime --> ui
     
     %% 스타일 정의
-    classDef moduleHeader fill:#f96,stroke:#333,stroke-width:2px;
+    classDef moduleHeader fill:#f96,stroke:#333,stroke-width:2px,color:black;
     class main moduleHeader
+    
+    classDef default color:black;
     
     linkStyle default stroke:#333,stroke-width:2px;
 ```
