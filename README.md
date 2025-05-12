@@ -58,63 +58,61 @@
 ```
 
 ```mermaid
-graph TD
-    %% 메인 모듈
-    A[IDSAgent_RL.py] --> B[modules/]
-    A --> C[scripts/]
+flowchart TB
+    main["IDSAgent_RL.py 메인 에이전트"]
     
-    %% 모듈 세부 구성
-    B --> D[reinforcement_learning.py]
-    B --> E[ml_models.py]
-    B --> F[packet_capture.py]
-    B --> G[utils.py]
+    main --> data
+    main --> model
+    main --> realtime
     
-    %% 스크립트 세부 구성
-    C --> H[data_preparation.py]
-    C --> I[components/]
+    %% 모듈 배치
+    subgraph data["데이터 수집 모듈"]
+        direction LR
+        collector["packet_collector.py"] --> generator["TrafficGeneratorApp"]
+    end
     
-    %% 컴포넌트 세부 구성
-    I --> J[packet_collector.py]
-    I --> K[TrafficGeneratorApp.py]
-    I --> L[DataPreprocessingApp.py]
+    subgraph preprocess["데이터 전처리 모듈"]
+        direction LR
+        preprocessing["DataPreprocessingApp"] --> features["특성 추출 및 변환"]
+    end
     
-    %% 데이터 흐름 관계
-    D -.-> |"모델 정보 활용"| E
-    F -.-> |"패킷 데이터 제공"| E
-    H -.-> |"UI 제어"| J
-    H -.-> |"UI 제어"| K
-    H -.-> |"UI 제어"| L
+    subgraph model["모델 학습 모듈"]
+        direction LR
+        ml["ml_models.py"] --> rf["랜덤 포레스트 학습"] --> eval["성능 평가 및 시각화"]
+    end
     
-    %% 모듈 기능 설명
-    A -.-> |"시스템 핵심"|
-    D -.-> |"DQN 모델"|
-    E -.-> |"랜덤 포레스트"|
-    F -.-> |"스캐피 패킷 캡처"|
+    subgraph rl["강화학습 모듈"]
+        direction LR
+        env["NetworkEnv"] --> agent["DQNAgent"] --> train["모델 학습 및 평가"]
+    end
+    
+    subgraph realtime["실시간 적용 모듈"]
+        direction LR
+        reinforce["reinforcement_learning"] --> dqn["DQN 에이전트 적용"] --> detect["위협 탐지 및 대응"]
+    end
+    
+    subgraph ui["사용자 인터페이스 모듈"]
+        direction LR
+        prep["data_preparation.py"] --> components["GUI 컴포넌트"] --> visual["시각화 및 보고"]
+    end
+    
+    %% 모듈 간 연결
+    data --> preprocess
+    preprocess --> model
+    model --> realtime
+    model --> rl
+    rl --> realtime
+    realtime --> ui
     
     %% 스타일 정의
-    classDef main fill:#f96,stroke:#333,stroke-width:2px,color:white;
-    classDef module fill:#6c8ebf,stroke:#333,stroke-width:1px,color:white;
-    classDef component fill:#d5e8d4,stroke:#82b366,stroke-width:1px,color:black;
+    classDef moduleHeader fill:#f96,stroke:#333,stroke-width:2px,color:white;
+    class main moduleHeader
     
-    %% 스타일 적용
-    class A main;
-    class B,C,D,E,F,G module;
-    class H,I,J,K,L component;
+    classDef nodeText fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black;
+    class collector,generator,preprocessing,features,ml,rf,eval,env,agent,train,reinforce,dqn,detect,prep,components,visual nodeText;
     
-    %% 노드 그룹화
-    subgraph "핵심 모듈"
-        A
-    end
-    
-    subgraph "데이터 처리"
-        E
-        F
-        L
-    end
-    
-    subgraph "AI 구성요소"
-        D
-    end
+    classDef subgraphText fill:transparent,color:black;
+    class data,preprocess,model,rl,realtime,ui subgraphText;
 ```
 
 ## 🛠️ 사용된 모듈 및 라이브러리
