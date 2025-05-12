@@ -95,9 +95,65 @@ Intrusion_DetectionSystem/
 - 새로운 데이터를 지속적으로 수집하여 모델 재학습
 - 변화하는 네트워크 환경에 적응
 
+```mermaid
+flowchart TD
+    collection[1. 데이터 수집] --> preprocessing[2. 데이터 전처리]
+    preprocessing --> training[3. 모델 학습]
+    training --> rl[4. 강화학습 통합]
+    rl --> detection[5. 실시간 탐지 및 차단]
+    detection --> update[6. 모델 업데이트]
+    update --> collection
+    
+    subgraph data_collection[데이터 수집]
+        interface[네트워크 인터페이스\n패킷 캡처]
+        generator[공격성 트래픽\n생성]
+    end
+    
+    subgraph data_prep[데이터 전처리]
+        extract[특성 추출]
+        normalize[정규화]
+        encode[범주형 데이터 인코딩]
+    end
+    
+    subgraph ml_train[모델 학습]
+        rf[랜덤 포레스트 학습]
+        evaluate[성능 평가]
+    end
+    
+    subgraph rl_integration[강화학습 통합]
+        state[상태 정의]
+        dqn[DQN 네트워크]
+        action[액션 선택]
+    end
+    
+    subgraph real_time[실시간 탐지]
+        monitor[트래픽 모니터링]
+        analyze[패킷 분석]
+        respond[자동 대응]
+    end
+    
+    collection --> data_collection
+    preprocessing --> data_prep
+    training --> ml_train
+    rl --> rl_integration
+    detection --> real_time
+```
+
 ## 🌟 하이브리드 접근 방식의 특징
 
 본 시스템은 랜덤 포레스트와 강화학습을 결합한 하이브리드 접근 방식을 사용합니다:
+
+```mermaid
+flowchart TD
+    packet[패킷 데이터] --> rf[랜덤 포레스트 1차 분류]
+    rf --> feature[분류 결과를 특성으로 추가]
+    feature --> state[강화학습 환경 상태로 활용]
+    state --> dqn[DQN 에이전트]
+    dqn --> action[최적의 대응 조치 선택]
+    
+    classDef highlight fill:#f96,stroke:#333,stroke-width:2px;
+    class dqn,rf highlight
+```
 
 1. **랜덤 포레스트 1차 분류**: 패킷 데이터를 랜덤 포레스트로 1차적으로 분류
 2. **랜덤 포레스트 예측 결과 활용**: 분류 결과를 특성(feature)으로 추가
@@ -201,6 +257,44 @@ DQNAgent 클래스는 심층 Q 네트워크를 구현하여 패킷에 대한 최
 
 본 시스템의 데이터 흐름 및 모듈 간 통합은 다음과 같은 과정으로 이루어집니다:
 
+```mermaid
+flowchart LR
+    subgraph 데이터수집[1. 데이터 수집 단계]
+        packet[packet_collector.py]
+        traffic[TrafficGeneratorApp.py]
+        packet --> traffic
+    end
+
+    subgraph 전처리[2. 데이터 전처리 단계]
+        preprocess[DataPreprocessingApp.py]
+        feature[특성 추출 및 가공]
+        preprocess --> feature
+    end
+
+    subgraph 모델학습[3. 모델 학습 단계]
+        ml[ml_models.py]
+        evaluation[성능 평가 및 시각화]
+        ml --> evaluation
+    end
+
+    subgraph 강화학습[4. 강화학습 통합 단계]
+        env[NetworkEnv]
+        dqn[DQNAgent]
+        env --> dqn
+    end
+
+    subgraph 실시간적용[5. 실시간 적용 단계]
+        agent[IDSAgent_RL.py]
+        response[위협 탐지 및 자동 대응]
+        agent --> response
+    end
+
+    데이터수집 --> 전처리
+    전처리 --> 모델학습
+    모델학습 --> 강화학습
+    강화학습 --> 실시간적용
+```
+
 1. **데이터 수집 단계**:
    - `packet_collector.py`를 통해 네트워크 패킷 캡처
    - `TrafficGeneratorApp.py`를 통한 인공 트래픽 생성
@@ -225,33 +319,59 @@ DQNAgent 클래스는 심층 Q 네트워크를 구현하여 패킷에 대한 최
 
 이 프로젝트의 전체 아키텍처는 데이터 수집, 전처리, 학습 및 실시간 적용의 통합된 파이프라인을 형성합니다:
 
-```
-                                     +-------------------+
-                                     |                   |
-                                     | IDSAgent_RL.py    |
-                                     | (메인 에이전트)   |
-                                     |                   |
-                                     +-------------------+
-                                              |
-                                              v
-                 +-------------------------------------------------------------------------+
-                 |                             |                                           |
-    +-------------------------+   +-------------------------+   +-------------------------+
-    |                         |   |                         |   |                         |
-    | 데이터 수집 모듈        |   | 모델 학습 모듈          |   | 실시간 적용 모듈        |
-    | - packet_collector.py   |   | - ml_models.py          |   | - reinforcement_learning |
-    | - TrafficGeneratorApp   |   | - 랜덤 포레스트 학습     |   | - DQN 에이전트 적용     |
-    |                         |   | - 성능 평가 및 시각화    |   | - 위협 탐지 및 대응     |
-    +-------------------------+   +-------------------------+   +-------------------------+
-                 |                             |                                           |
-                 v                             v                                           v
-    +-------------------------+   +-------------------------+   +-------------------------+
-    |                         |   |                         |   |                         |
-    | 데이터 전처리 모듈      |   | 강화학습 모듈           |   | 사용자 인터페이스 모듈  |
-    | - DataPreprocessingApp  |   | - NetworkEnv            |   | - data_preparation.py   |
-    | - 특성 추출 및 변환     |   | - DQNAgent              |   | - GUI 컴포넌트          |
-    |                         |   | - 모델 학습 및 평가      |   | - 시각화 및 보고        |
-    +-------------------------+   +-------------------------+   +-------------------------+
+```mermaid
+flowchart TD
+    main[IDSAgent_RL.py\n메인 에이전트] --> modules
+
+    subgraph modules[시스템 모듈]
+        direction TB
+        data[데이터 수집 모듈] --> preprocess[데이터 전처리 모듈]
+        model[모델 학습 모듈] --> rl[강화학습 모듈]
+        realtime[실시간 적용 모듈] --> ui[사용자 인터페이스 모듈]
+    end
+
+    main --> data
+    main --> model
+    main --> realtime
+
+    subgraph data[데이터 수집 모듈]
+        collector[packet_collector.py]
+        generator[TrafficGeneratorApp]
+    end
+
+    subgraph preprocess[데이터 전처리 모듈]
+        preprocessing[DataPreprocessingApp]
+        features[특성 추출 및 변환]
+    end
+
+    subgraph model[모델 학습 모듈]
+        ml[ml_models.py]
+        rf[랜덤 포레스트 학습]
+        eval[성능 평가 및 시각화]
+    end
+
+    subgraph rl[강화학습 모듈]
+        env[NetworkEnv]
+        agent[DQNAgent]
+        train[모델 학습 및 평가]
+    end
+
+    subgraph realtime[실시간 적용 모듈]
+        reinforce[reinforcement_learning]
+        dqn[DQN 에이전트 적용]
+        detect[위협 탐지 및 대응]
+    end
+
+    subgraph ui[사용자 인터페이스 모듈]
+        prep[data_preparation.py]
+        components[GUI 컴포넌트]
+        visual[시각화 및 보고]
+    end
+
+    data --> model
+    preprocess --> model
+    model --> realtime
+    rl --> realtime
 ```
 
 이러한 통합 아키텍처를 통해 데이터 흐름이 원활하게 이루어지며, 각 모듈의 기능이 유기적으로 연결됩니다. 특히 랜덤 포레스트와 강화학습의 통합은 이 시스템의 핵심 특징으로, 두 알고리즘의 장점을 결합하여 더 높은 탐지 성능과 적응성을 제공합니다.
