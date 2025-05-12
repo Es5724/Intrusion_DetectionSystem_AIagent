@@ -149,7 +149,7 @@ flowchart TB
     classDef processBox fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black;
     class collection,preprocessing,training,rl_integration,detection processBox;
     
-    classDef nodeText color:black;
+    classDef nodeText fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black;
     class interface,generator,extract,normalize,encode,rf,evaluate,state,dqn,action,monitor,analyze,respond nodeText;
     
     classDef subgraphText color:black;
@@ -172,7 +172,7 @@ flowchart TD
     dqn --> action[최적의 대응 조치 선택]
     
     classDef highlight fill:#f96,stroke:#333,stroke-width:2px,color:white;
-    classDef normal color:black;
+    classDef normal fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black;
     class dqn,rf highlight
     class packet,feature,state,action normal
 ```
@@ -316,7 +316,7 @@ flowchart LR
     모델학습 --> 강화학습
     강화학습 --> 실시간적용
     
-    classDef nodeText color:black;
+    classDef nodeText fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black;
     class packet,traffic,preprocess,feature,ml,evaluation,env,dqn,agent,response nodeText;
     
     classDef subgraphText fill:transparent,color:black;
@@ -398,7 +398,7 @@ flowchart TB
     classDef moduleHeader fill:#f96,stroke:#333,stroke-width:2px,color:white;
     class main moduleHeader
     
-    classDef nodeText color:black;
+    classDef nodeText fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black;
     class collector,generator,preprocessing,features,ml,rf,eval,env,agent,train,reinforce,dqn,detect,prep,components,visual nodeText;
     
     classDef subgraphText fill:transparent,color:black;
