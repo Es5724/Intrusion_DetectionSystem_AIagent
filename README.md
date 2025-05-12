@@ -57,68 +57,10 @@
     └── 📄 utils.py                      # 유틸리티 함수
 ```
 
-```mermaid
-flowchart TB
-    main["IDSAgent_RL.py 메인 에이전트"]
-    
-    main --> data
-    main --> model
-    main --> realtime
-    
-    %% 모듈 배치
-    subgraph data["데이터 수집 모듈"]
-        direction LR
-        collector["packet_collector.py"] --> generator["TrafficGeneratorApp"]
-    end
-    
-    subgraph preprocess["데이터 전처리 모듈"]
-        direction LR
-        preprocessing["DataPreprocessingApp"] --> features["특성 추출 및 변환"]
-    end
-    
-    subgraph model["모델 학습 모듈"]
-        direction LR
-        ml["ml_models.py"] --> rf["랜덤 포레스트 학습"] --> eval["성능 평가 및 시각화"]
-    end
-    
-    subgraph rl["강화학습 모듈"]
-        direction LR
-        env["NetworkEnv"] --> agent["DQNAgent"] --> train["모델 학습 및 평가"]
-    end
-    
-    subgraph realtime["실시간 적용 모듈"]
-        direction LR
-        reinforce["reinforcement_learning"] --> dqn["DQN 에이전트 적용"] --> detect["위협 탐지 및 대응"]
-    end
-    
-    subgraph ui["사용자 인터페이스 모듈"]
-        direction LR
-        prep["data_preparation.py"] --> components["GUI 컴포넌트"] --> visual["시각화 및 보고"]
-    end
-    
-    %% 모듈 간 연결
-    data --> preprocess
-    preprocess --> model
-    model --> realtime
-    model --> rl
-    rl --> realtime
-    realtime --> ui
-    
-    %% 스타일 정의
-    classDef moduleHeader fill:#f96,stroke:#333,stroke-width:2px,color:white;
-    class main moduleHeader
-    
-    classDef nodeText fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black;
-    class collector,generator,preprocessing,features,ml,rf,eval,env,agent,train,reinforce,dqn,detect,prep,components,visual nodeText;
-    
-    classDef subgraphText fill:transparent,color:black;
-    class data,preprocess,model,rl,realtime,ui subgraphText;
-```
-
 ## 🛠️ 사용된 모듈 및 라이브러리
 
 ### 데이터 처리 및 분석 모듈
-- **pandas**: 데이터 구조 및 분석을 위한 라이브러리
+- **pandas**: 대용량 네트워크 패킷 데이터의 효율적인 처리, 분석 및 번환을 위한 고성능 데이터 프레임 워크로, 결측치 처리와 특성 추출에 핵심적인 역할을 담당한다.
 - **numpy**: 수치 계산을 위한 라이브러리
 
 ### 머신러닝 관련 모듈
