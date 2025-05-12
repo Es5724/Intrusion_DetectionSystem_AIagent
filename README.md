@@ -1,26 +1,6 @@
+@ -1,332 +1,332 @@
 # 반응형 취약점 차단 AI 에이전트
 
-<<<<<<< HEAD
-## 0. 목차
-[1] [개요](#1-개요)   
-[2] [사용한 모듈](#2-사용한-모듈)   
-[3] [학습 방법](#3-학습-방법)   
-[4] [프로그램 작동](#4-프로그램-작동)   
-[5] [AI 에이전트 함수](#5-ai-에이전트-함수)   
-
-## 1. 개요
-AI 에이전트가 네트워크 보안 취약점 학습(차단) 하는 시스템입니다.
-
-[팀]   
-**안상수** : 팀장, 설계, 프로그래밍   
-**신명재** : 테이터 학습, 문서작업, 프로그래밍   
-**최준형** : 테이터 학습, 이미지 시각화   
-**민인영** : 데이터 학습, 웹 제작   
-
-## 2. 사용한 모듈
-[1] [메인 모듈](#1-메인-모듈)   
-[2] [서브 모듈](#2-서브-모듈)   
-=======
 <div align="center">
   <img src="https://img.shields.io/badge/Language-Python-blue" alt="Language">
   <img src="https://img.shields.io/badge/Framework-PyTorch-orange" alt="Framework">
@@ -45,68 +25,12 @@ AI 에이전트가 네트워크 보안 취약점 학습(차단) 하는 시스템
 AI 에이전트가 시스템의 네트워크 보안 취약점을 찾아 위험 요소를 학습 및 차단하는 시스템입니다. 랜덤 포레스트(Random Forest)와 강화학습(Reinforcement Learning)을 결합한 하이브리드 접근 방식을 사용하여 더 높은 탐지율과 적응성을 제공합니다.
 
 ## 👥 팀원 정보
->>>>>>> d171c4560085ce13584963f9314e0cc174066770
 
-### (1) 메인 모듈
-- [데이터 분석]
-    - **pandas (pd)** : 구조화된 데이터를 분석, 처리하는 라이브러리
-    - **numpy (np)** : 행열 데이터를 분석, 처리하는 라이브러리
-- [머신러닝]
-    - **sklearn** : 모델 학습, 예측, 정확도 평가, 트래픽 분류 라이브러리
-    - **joblib** : 머신러닝 모델을 저장/로드에 최적화된 라이브러리
-- [시각화]
-    - **matplotlib (plt)** : 2D 그래프, 차트 생성 라이브러리
-    - **seaborn (sns)** : 통계 데이터, 혼동행렬 시각화 라이브러리
-- [네트워크]
-    - **socket** : 저수준 네트워크 통신을 구현할 수 있는 라이브러리
-    - **scapy** : 네트워크 보안 및 트래픽 처리용 라이브러리
-- [운영체제(시스템)]
-    - **os** : 운영체제 터미널 라이브러리
-    - **sys** : 인터프리터, 기본적인 기능을 제공하는 표준 라이브러리
-    - **ctypes** : C언어 라이브러리를 파이썬에서 작동되게 하는 라이브러리
-    - **psutil** :
-    - **winreg** :
-- [멀티 스레딩]
-    - 
-- [GUI]
-    - 
-- [유틸리티]
-    - 
-- [터미널]
-    - 
+- **안상수**: 팀장, 시스템 설계, 메인프로그래밍
+- **신명재**: 데이터 학습 및 문서작업
+- **민인영**: 데이터 학습 및 이미지 시각화
+- **최준형**: 데이터 학습 및 백엔드작업
 
-<<<<<<< HEAD
-### (2) 서브 모듈
-- [머신러닝]
-    - **sklearn**
-        - RandomForestClassifier : 랜덤으로 샘플링하여 훈련세트 만들어 학습
-        - train_test_split : 데이터를 학습용과 테스트용으로 자동 분할
-        - accuracy_score : 예측한 값이 얼마나 일치하는지 백분율로 계산
-        - confusion matrix : 예측한 값이 얼마나 정확하게 분류했는지 계산
-        - StandardScaler : 평균 0, 표준편차 1로 모든 특성 값 표준화
-        - LabelEncoder : 문자형 데이터를 정수형 숫자로 변환
-- [시각화]
-    - **matplotlib**
-        - FigureCanvasTkAgg : 
-        - Figure : 
-        - 
-
-- **matplotlib.backends.backend_tkagg.FigureCanvasTkAgg**: Tkinter GUI에 matplotlib 그림을 표시하기 위한 클래스
-- **matplotlib.figure.Figure**: matplotlib 그림 객체 생성
-
-### 네트워크 및 패킷 캡처 관련 모듈
-- **scapy.all.sniff, IP, TCP, UDP, ICMP**: 패킷 캡처 및 분석을 위한 라이브러리
-- **scapy.layers.inet.IP, TCP**: IP 및 TCP 프로토콜 처리
-- **scapy.sendrecv.sr1, send**: 패킷 전송 및 응답 수신 기능
-
-### 시스템 및 OS 관련 모듈
-- **psutil**: 시스템 모니터링. 네트워크 인터페이스 정보 획득에 사용
-- **winreg**: Windows 레지스트리 접근. Npcap 설치 확인에 사용
-
-### 멀티스레딩 및 동시성 관련 모듈
-- **threading**: 멀티스레딩 구현. 패킷 캡처, 분석, 모니터링 등을 병렬로 처리
-- **queue**: 스레드 간 데이터 전달을 위한 큐. 패킷 정보 저장 및 처리에 사용
-=======
 ## 🏗️ 프로젝트 구조
 
 ```
@@ -141,138 +65,42 @@ Intrusion_DetectionSystem/
 
 ### 네트워크 및 패킷 캡처 관련 모듈
 - **Scapy**: 패킷 캡처, 분석, 생성 및 전송 기능
->>>>>>> d171c4560085ce13584963f9314e0cc174066770
 
 ### GUI 관련 모듈
 - **PyQt6**: GUI 구현을 위한 Qt 프레임워크의 Python 바인딩
 
 ## 🔄 AI 에이전트 작동 방식
 
-### 1. 데이터 수집
-- 네트워크 인터페이스에서 실시간으로 패킷을 캡처
-- 공격성 트래픽 생성 어플리케이션으로 학습용 데이터 생성
-
-### 2. 데이터 전처리
-- 패킷 데이터에서 중요 특성 추출 (출발지 IP, 목적지 IP, 프로토콜, 길이 등)
-- 결측치 처리, 데이터 정규화, 범주형 데이터 인코딩
-
-### 3. 모델 학습
-- 랜덤 포레스트 알고리즘으로 분류 모델 학습
-- 정상 트래픽과 공격성 트래픽을 구분하는 패턴 학습
-
-### 4. 강화학습 통합
-- 랜덤 포레스트의 예측 결과를 강화학습 에이전트의 상태(state)로 활용
-- DQN(Deep Q-Network)을 통해 최적의 대응 정책 학습
-- 액션 공간: 허용(0), 차단(1), 모니터링(2)
-
-### 5. 실시간 탐지 및 차단
-- 실시간 네트워크 트래픽 모니터링 및 분석
-- DQN 에이전트의 결정에 따른 자동 대응 조치 수행
-
-### 6. 모델 업데이트
-- 새로운 데이터를 지속적으로 수집하여 모델 재학습
-- 변화하는 네트워크 환경에 적응
-
 ```mermaid
-graph TB
-    %% 단순한 단계 정의
-    s1[1-데이터수집] --> s2[2-데이터전처리]
-    s2 --> s3[3-모델학습]
-    s3 --> s4[4-강화학습통합]
-    s4 --> s5[5-실시간탐지]
-    s5 --> s6[6-모델업데이트]
-    s6 -.-> s1
+flowchart TD
+    A("데이터 수집") --> B("데이터 전처리")
+    B --> C("모델 학습")
+    C --> D("강화학습 통합")
+    D --> E("실시간 탐지")
+    E --> F("모델 업데이트")
+    F -.-> A
     
-    %% 세부 과정
-    subgraph 수집[데이터 수집]
-        direction TB
-        i1[네트워크 캡처] --> i2[트래픽 생성]
-    end
-    
-    subgraph 전처리[데이터 전처리]
-        direction TB
-        p1[특성 추출] --> p2[정규화] --> p3[인코딩]
-    end
-    
-    subgraph 학습[모델 학습]
-        direction TB
-        m1[랜덤 포레스트] --> m2[성능 평가]
-    end
-    
-    subgraph 통합[강화학습 통합]
-        direction TB
-        r1[상태 정의] --> r2[DQN] --> r3[액션]
-    end
-    
-    subgraph 적용[실시간 적용]
-        direction TB
-        a1[모니터링] --> a2[분석] --> a3[대응]
-    end
-    
-    %% 연결
-    s1 --- 수집
-    s2 --- 전처리
-    s3 --- 학습
-    s4 --- 통합
-    s5 --- 적용
-    
-    %% 스타일
-    style s1 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
-    style s2 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
-    style s3 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
-    style s4 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
-    style s5 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
-    style s6 fill:#f96,color:white,stroke:#333,stroke-width:2px,width:120px,height:60px
-    
-    style 수집 fill:#e6f7ff,stroke:#333,stroke-width:2px
-    style 전처리 fill:#e6f7ff,stroke:#333,stroke-width:2px
-    style 학습 fill:#e6f7ff,stroke:#333,stroke-width:2px
-    style 통합 fill:#e6f7ff,stroke:#333,stroke-width:2px
-    style 적용 fill:#e6f7ff,stroke:#333,stroke-width:2px
-    
-    style i1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    style i2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    style p1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    style p2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    style p3 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    style m1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    style m2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    style r1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    style r2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    style r3 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    style a1 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    style a2 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    style a3 fill:#f2f2f2,stroke:#333,width:100px,height:50px
-    
-    %% 전체 연결선 스타일
-    linkStyle default stroke:#333,stroke-width:2px
+    classDef main fill:#f96,color:#fff,stroke:#333,stroke-width:1px;
+    class A,B,C,D,E,F main;
 ```
 
-<<<<<<< HEAD
-## 3. 학습 방법
-
-1. **데이터 수집**:
-   - 네트워크 인터페이스에서 실시간으로 패킷을 캡처하여 데이터를 수집합니다. **(사용 라이브러리: Scapy)**
-   - 다양한 유형의 트래픽 데이터를 수집하여 학습 데이터셋을 구성합니다.
-   - 에이전트 개발 중 자체 제작된 공격성 트래픽 생성 어플리케이션으로 공격성 패킷을 생성 및 전송하여 데이터를 생성합니다.**(사용 라이브러리: Scapy)**
- 
-=======
 ## 🌟 하이브리드 접근 방식의 특징
 
 본 시스템은 랜덤 포레스트와 강화학습을 결합한 하이브리드 접근 방식을 사용합니다:
 
 ```mermaid
 flowchart TD
-    packet["패킷 데이터"] --> rf["랜덤 포레스트 1차 분류"]
-    rf --> feature["분류 결과를 특성으로 추가"]
-    feature --> state["강화학습 환경 상태로 활용"]
-    state --> dqn["DQN 에이전트"]
-    dqn --> action["최적의 대응 조치 선택"]
+    A("패킷 데이터") --> B("랜덤 포레스트 1차 분류")
+    B --> C("분류 결과를 특성으로 추가")
+    C --> D("강화학습 환경 상태로 활용")
+    D --> E("DQN 에이전트")
+    E --> F("최적의 대응 조치 선택")
     
-    classDef highlight fill:#f96,stroke:#333,stroke-width:2px,color:white;
-    classDef normal fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black;
-    class dqn,rf highlight
-    class packet,feature,state,action normal
+    classDef primary fill:#f96,color:#fff,stroke:#333,stroke-width:2px;
+    classDef secondary fill:#f2f2f2,color:#000,stroke:#333,stroke-width:1px;
+    
+    class B,E primary;
+    class A,C,D,F secondary;
 ```
 
 1. **랜덤 포레스트 1차 분류**: 패킷 데이터를 랜덤 포레스트로 1차적으로 분류
@@ -496,213 +324,12 @@ flowchart TB
     classDef moduleHeader fill:#f96,stroke:#333,stroke-width:2px,color:white;
     class main moduleHeader
     
+    classDef nodeText fill:#f2f2f2,stroke:#333,stroke-width:1px,color:white;
     classDef nodeText fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black;
     class collector,generator,preprocessing,features,ml,rf,eval,env,agent,train,reinforce,dqn,detect,prep,components,visual nodeText;
     
     classDef subgraphText fill:transparent,color:black;
+    classDef subgraphText fill:transparent,color:white;
     class data,preprocess,model,rl,realtime,ui subgraphText;
     
     linkStyle default stroke:#333,stroke-width:2px;
-```
-
-이러한 통합 아키텍처를 통해 데이터 흐름이 원활하게 이루어지며, 각 모듈의 기능이 유기적으로 연결됩니다. 특히 랜덤 포레스트와 강화학습의 통합은 이 시스템의 핵심 특징으로, 두 알고리즘의 장점을 결합하여 더 높은 탐지 성능과 적응성을 제공합니다.
-
-## 📋 프로그램 작동법
-
-### 데이터 준비 애플리케이션 (DataPreprocessingApp)
-
-1. **데이터 파일 업로드**:
-   - 'data_preparation.py'를 실행하여 메인 메뉴에 접근
-   - '데이터 전처리' 버튼을 클릭하여 DataPreprocessingApp 실행
-   - '데이터 파일 업로드' 버튼으로 CSV 또는 PCAP 파일 선택
-   - 데이터는 자동으로 테이블에 로드되어 표시됨
->>>>>>> d171c4560085ce13584963f9314e0cc174066770
-
-2. **데이터 전처리**:
-   - '데이터 전처리' 버튼 클릭
-   - 결측치 처리, 정규화, 인코딩 등의 과정이 자동 수행됨
-   - 전처리 결과 표시 및 저장 옵션 제공
-   - 저장 위치 선택 후 CSV 형식으로 저장
-
-### 침입 탐지 에이전트 (IDSAgent_RL)
-
-1. **환경 확인**: Google Colab 환경과 로컬 환경에서 다르게 작동
-2. **관리자 권한 실행**: Windows 환경에서는 관리자 권한으로 실행
-3. **패킷 캡처**: 네트워크 인터페이스 선택 및 캡처 시작
-4. **실시간 모니터링**: 패킷 캡처 상태와 정보를 실시간으로 모니터링
-5. **데이터 저장 및 전처리**: 패킷 데이터 주기적 저장 및 전처리
-6. **머신러닝 모델 학습**: 전처리된 데이터로 모델 학습 및 평가
-
-### 트래픽 생성 (TrafficGeneratorApp)
-
-1. **공격성 패킷 생성**:
-   - 'data_preparation.py'에서 '트래픽 생성' 버튼 클릭
-   - 공격 대상 IP 입력
-   - 패킷 크기 및 유형 선택
-   - 생성할 패킷 수 설정
-   - '생성 시작' 버튼으로 트래픽 생성 및 전송
-
-## 🔮 향후 개발 계획
-
-<<<<<<< HEAD
-
-**Main.App.py : 패킷 캡쳐 및 공격성 패킷 생성 기능을 구현한 어플리케이션**
-
-**AI_agent : 이 프로젝트에서 학습시키고 구현하고자 한 기능을 넣을 어플리케이션**
-
-## 4. 프로그램 작동
-
-**관리자 권한 실행** : windows 환경에서는 관리자 권한으로 실행해야합니다. 프로그램이 자동으로 관리자 권한으로 재실행 됩니다.
-
-**패킷 캡쳐 기능** 
-   1.프로그램이 자동으로 사용가능한 인터페이스를 인식하여 선택합니다.(개발 도중은 wifi로 고정)
-   2.캡쳐할 패킷의 수를 텍스트 박스에서 설정 후 패킷 캡쳐를 실행
-   3.캡쳐된 패킷 데이터를 저장
-
-**데이터 전처리**
-   1. 전처리할 패킷 데이터를 데이터파일 업로드 버튼을 통해 선택합니다.
-   2. 패킷 데이터를 전처리 후 데이터 파일을 저장합니다.
-
-**트래픽생성(공격성)**
-   1. 공격성 패킷을 보낼 ip를 입력합니다. 
-   2. 패킷의 크기를 선택합니다.
-   3. 공격의 유형을 선택합니다.(기본 프리셋 제공)
-   4. 보낼 패킷의 수 설정
-   5. 트래픽 생성 및 전송(공격)
-
-
-## 프로그램 작동법(AI_agent)
-
-1. **환경 확인**: 프로그램은 Google Colab 환경과 로컬 환경에서 다르게 작동합니다. Colab에서는 머신러닝 모델 학습만 가능하며, 포트 스캔 및 패킷 캡처는 로컬 환경에서만 가능합니다.
-2. **관리자 권한 실행**: Windows 환경에서는 관리자 권한으로 실행해야 합니다. 프로그램이 자동으로 관리자 권한으로 재실행됩니다.
-3. **패킷 캡처**: 네트워크 인터페이스를 선택하여 패킷 캡처를 시작합니다. Npcap이 설치되어 있어야 하며, 개발 중 와이파이 인터페이스를 자동으로 선택합니다.
-4. **실시간 모니터링**: 패킷 캡처 상태와 캡처된 패킷 정보를 실시간으로 모니터링합니다.
-5. **데이터 저장 및 전처리**: 캡처된 패킷 데이터를 주기적으로 CSV 파일로 저장하고 전처리합니다.
-6. **머신러닝 모델 학습**: 전처리된 데이터를 사용하여 머신러닝 모델을 학습하고 평가합니다. 모델은 RandomForestClassifier를 사용하며, 학습 결과는 웹과 연동되어 시각화됩니다.
-
-## 5. AI 에이전트 함수
-
-### 주요 함수 및 기능
-
-- `is_colab()`: Google Colab 환경인지 확인합니다.
-- `is_admin()`: Windows에서 관리자 권한을 확인합니다.
-- `run_as_admin()`: 관리자 권한으로 프로그램을 재실행합니다.
-- `clear_screen()`: 화면을 지웁니다.
-- `wait_for_enter()`: Enter 키를 누를 때까지 대기합니다.
-- `print_scan_status(port, status, start_time)`: 스캔 상태를 실시간으로 출력합니다.
-- `syn_scan(target_ip, ports)`: TCP SYN 스캔을 수행합니다.
-
-### PacketCapture 클래스
-
-**속성:**
-- `interface`: 패킷을 캡처할 네트워크 인터페이스.
-- `count`: 캡처할 패킷의 수.
-
-**메서드:**
-- `capture_packets()`: 지정된 인터페이스에서 패킷을 캡처합니다.
-- `preprocess_packets(packets)`: 캡처된 패킷을 DataFrame으로 전처리합니다.
-- `_get_packet_info(packet)`: 패킷의 상세 정보를 추출합니다.
-- `_get_tcp_flags(flags)`: TCP 플래그를 추출합니다.
-- `save_to_csv(dataframe, filename)`: DataFrame을 CSV 파일로 저장합니다.
-
-### PacketCaptureCore 클래스
-
-**속성:**
-- `packet_queue`: 캡처된 패킷을 저장하는 큐.
-- `is_running`: 캡처 상태를 나타내는 플래그.
-- `packet_count`: 캡처된 패킷의 수.
-- `max_packets`: 최대 캡처할 패킷의 수.
-- `sniff_thread`: 패킷 캡처를 위한 스레드.
-- `capture_completed`: 캡처 완료 상태를 나타내는 플래그.
-
-**메서드:**
-- `check_npcap()`: Npcap 설치 여부를 확인합니다.
-- `get_network_interfaces()`: 네트워크 인터페이스 목록을 반환합니다.
-- `start_capture(interface, max_packets)`: 패킷 캡처를 시작합니다.
-- `stop_capture()`: 패킷 캡처를 중지합니다.
-- `get_packet_queue()`: 패킷 큐를 반환합니다.
-- `get_packet_count()`: 캡처된 패킷 수를 반환합니다.
-- `get_packet_dataframe()`: 패킷 큐에 있는 데이터를 DataFrame으로 변환합니다.
-- `_process_packet(packet)`: 캡처된 패킷을 처리합니다.
-
-### MLTrainingWindow 클래스
-
-**속성:**
-- `root`: Tkinter 루트 윈도우.
-- `status_frame`: 학습 상태를 표시하는 프레임.
-- `log_frame`: 학습 로그를 표시하는 프레임.
-- `metrics_frame`: 성능 지표를 표시하는 프레임.
-- `confusion_frame`: 혼동 행렬을 표시하는 프레임.
-- `gui_queue`: GUI 업데이트를 위한 큐.
-
-**메서드:**
-- `process_gui_queue()`: GUI 큐를 처리하여 상태를 업데이트합니다.
-- `show()`: GUI를 표시합니다.
-- `update_status()`: 상태를 업데이트합니다.
-- `update_metrics()`: 성능 지표를 업데이트합니다.
-
-### 기타 기능
-
-- `main()`: 프로그램의 메인 함수로, Colab 환경 확인, 관리자 권한 확인, 패킷 캡처 시작, 머신러닝 학습 모니터링 등을 수행합니다.
-
-## 에이전트 구조
-
-```
-+-----------------------+
-|   PacketCapture       |
-+-----------------------+
-| - interface           |
-| - count               |
-|-----------------------|
-| + capture_packets()   |
-| + preprocess_packets()|
-| + _get_packet_info()  |
-| + _get_tcp_flags()    |
-| + save_to_csv()       |
-+-----------------------+
-         |
-         v
-+-----------------------+
-|   PacketCaptureCore   |
-+-----------------------+
-| - packet_queue        |
-| - is_running          |
-| - packet_count        |
-| - max_packets         |
-| - sniff_thread        |
-| - capture_completed   |
-|-----------------------|
-| + check_npcap()       |
-| + get_network_interfaces() |
-| + start_capture()     |
-| + stop_capture()      |
-| + get_packet_queue()  |
-| + get_packet_count()  |
-| + get_packet_dataframe() |
-| + _process_packet()   |
-+-----------------------+
-         |
-         v
-+-----------------------+
-|   MLTrainingWindow    |
-+-----------------------+
-| - root                |
-| - status_frame        |
-| - log_frame           |
-| - metrics_frame       |
-| - confusion_frame     |
-| - gui_queue           |
-|-----------------------|
-| + process_gui_queue() |
-| + show()              |
-| + update_status()     |
-| + update_metrics()    |
-+-----------------------+
-```
-=======
-- PPO(Proximal Policy Optimization) 알고리즘 구현
-- 다양한 네트워크 환경에서의 적응성 향상
-- 분산 학습 시스템 구축
-- 실시간 대응 메커니즘 고도화
-- 사용자 피드백 기반 성능 최적화
->>>>>>> d171c4560085ce13584963f9314e0cc174066770

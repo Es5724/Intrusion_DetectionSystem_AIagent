@@ -91,6 +91,15 @@ class PacketCaptureCore:
         self.max_packets = 300000
         self.sniff_thread = None
         self.capture_completed = False
+        self.defense_callback = None  # 방어 모듈 콜백 함수
+        self.enable_defense = False   # 방어 기능 활성화 여부
+
+    def register_defense_module(self, callback_function):
+        """방어 모듈 콜백 함수를 등록합니다."""
+        self.defense_callback = callback_function
+        self.enable_defense = True
+        print("방어 모듈이 패킷 캡처 시스템에 등록되었습니다.")
+        return True
 
     def check_npcap(self):
         """Npcap 설치 여부를 확인합니다."""
@@ -152,6 +161,12 @@ class PacketCaptureCore:
                     self.packet_queue.put(packet_info)
                     self.packet_count += 1
                     print(f"디버그: 패킷 캡처됨 - {self.packet_count}번째 패킷")
+                    
+                    # 방어 모듈 콜백 함수가 등록되었고 활성화되어 있으면 실행
+                    if self.enable_defense and self.defense_callback:
+                        # 전처리된 패킷을 방어 모듈로 직접 전달
+                        self.defense_callback(packet_info)
+                        
                 except Exception as e:
                     print(f"디버그: 패킷 처리 중 오류 발생: {str(e)}")
             return True

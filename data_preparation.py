@@ -20,9 +20,8 @@ import ctypes
 
 # 모듈 경로 추가
 current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-if parent_dir not in sys.path:
-    sys.path.append(parent_dir)
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
 
 # PyQt6 임포트
 from PyQt6.QtWidgets import (
@@ -33,9 +32,9 @@ from PyQt6.QtGui import QIcon, QFont
 from PyQt6.QtCore import Qt, QSize
 
 # 애플리케이션 모듈 임포트
-from components.packet_collector import PacketCapture, PacketCaptureCore, MainApp as PacketCollectorApp
-from components.TrafficGeneratorApp import TrafficGeneratorApp
-from components.DataPreprocessingApp import DataPreprocessingApp
+from scripts.components.packet_collector import PacketCapture, PacketCaptureCore, MainApp as PacketCollectorApp
+from scripts.components.TrafficGeneratorApp import TrafficGeneratorApp
+from scripts.components.DataPreprocessingApp import DataPreprocessingApp
 
 #
 def is_admin():
@@ -239,4 +238,4 @@ def main():
     sys.exit(app.exec())
 
 if __name__ == "__main__":
-    main()
+    main() 
