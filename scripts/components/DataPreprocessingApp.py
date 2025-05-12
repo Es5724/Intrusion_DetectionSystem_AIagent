@@ -2,7 +2,17 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QFileDial
 from PyQt6.QtGui import QIcon, QCloseEvent
 import pandas as pd
 from scapy.all import rdpcap, IP, TCP, UDP, ICMP
-from packet_collector import PacketCapture
+import os
+import sys
+
+# 모듈 경로를 부모 디렉토리로 설정하기 위한 코드 추가
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)  # components 디렉토리의 부모 (scripts)
+sys.path.append(parent_dir)
+
+# components 디렉토리의 패킷 캡처 모듈을 임포트
+from components.packet_collector import PacketCapture
+
 from PyQt6.QtCore import Qt
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer

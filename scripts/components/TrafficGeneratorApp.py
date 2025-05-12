@@ -9,8 +9,14 @@ from multiprocessing import Process, Value
 import subprocess
 import ctypes
 import sys
+import os
 import json
 from PyQt6.QtCore import Qt
+
+# 모듈 경로를 부모 디렉토리로 설정하기 위한 코드 추가
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)  # components 디렉토리의 부모 (scripts)
+sys.path.append(parent_dir)
 
 #이하 기능들 전부  AI에이전트로 옮겨야함
 
