@@ -143,7 +143,7 @@ flowchart TB
     step5 ---- detection
     
     %% 스타일 정의
-    classDef mainStep fill:#f96,stroke:#333,stroke-width:2px,color:black;
+    classDef mainStep fill:#f96,stroke:#333,stroke-width:2px,color:white;
     class step1,step2,step3,step4,step5,step6 mainStep;
     
     classDef processBox fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black;
@@ -151,6 +151,9 @@ flowchart TB
     
     classDef nodeText color:black;
     class interface,generator,extract,normalize,encode,rf,evaluate,state,dqn,action,monitor,analyze,respond nodeText;
+    
+    classDef subgraphText color:black;
+    class collection,preprocessing,training,rl_integration,detection subgraphText;
     
     linkStyle default stroke:#333,stroke-width:1.5px;
     linkStyle 5 stroke:#333,stroke-width:1.5px,stroke-dasharray:5;
@@ -168,7 +171,7 @@ flowchart TD
     state --> dqn[DQN 에이전트]
     dqn --> action[최적의 대응 조치 선택]
     
-    classDef highlight fill:#f96,stroke:#333,stroke-width:2px,color:black;
+    classDef highlight fill:#f96,stroke:#333,stroke-width:2px,color:white;
     classDef normal color:black;
     class dqn,rf highlight
     class packet,feature,state,action normal
@@ -315,6 +318,9 @@ flowchart LR
     
     classDef nodeText color:black;
     class packet,traffic,preprocess,feature,ml,evaluation,env,dqn,agent,response nodeText;
+    
+    classDef subgraphText fill:transparent,color:black;
+    class 데이터수집,전처리,모델학습,강화학습,실시간적용 subgraphText;
 ```
 
 1. **데이터 수집 단계**:
@@ -389,11 +395,14 @@ flowchart TB
     realtime --> ui
     
     %% 스타일 정의
-    classDef moduleHeader fill:#f96,stroke:#333,stroke-width:2px,color:black;
+    classDef moduleHeader fill:#f96,stroke:#333,stroke-width:2px,color:white;
     class main moduleHeader
     
     classDef nodeText color:black;
     class collector,generator,preprocessing,features,ml,rf,eval,env,agent,train,reinforce,dqn,detect,prep,components,visual nodeText;
+    
+    classDef subgraphText fill:transparent,color:black;
+    class data,preprocess,model,rl,realtime,ui subgraphText;
     
     linkStyle default stroke:#333,stroke-width:2px;
 ```
