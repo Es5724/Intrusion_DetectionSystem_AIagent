@@ -98,12 +98,12 @@ Intrusion_DetectionSystem/
 ```mermaid
 flowchart TB
     %% 주요 단계 정의
-    step1["1. 데이터 수집"]
-    step2["2. 데이터 전처리"]
-    step3["3. 모델 학습"]
-    step4["4. 강화학습 통합"]
-    step5["5. 실시간 탐지 및 차단"]
-    step6["6. 모델 업데이트"]
+    step1("1. 데이터 수집")
+    step2("2. 데이터 전처리")
+    step3("3. 모델 학습")
+    step4("4. 강화학습 통합")
+    step5("5. 실시간 탐지 및 차단")
+    step6("6. 모델 업데이트")
     
     %% 단계별 연결
     step1 --> step2 --> step3 --> step4 --> step5 --> step6
@@ -112,51 +112,66 @@ flowchart TB
     %% 각 단계의 세부 과정
     subgraph collection["데이터 수집 과정"]
         direction LR
-        interface["네트워크 인터페이스 패킷 캡처"] --> generator["공격성 트래픽 생성"]
+        interface("네트워크 인터페이스 패킷 캡처") --> generator("공격성 트래픽 생성")
     end
     
     subgraph preprocessing["데이터 전처리 과정"]
         direction LR
-        extract["특성 추출"] --> normalize["정규화"] --> encode["범주형 데이터 인코딩"]
+        extract("특성 추출") --> normalize("정규화") --> encode("범주형 데이터 인코딩")
     end
     
     subgraph training["모델 학습 과정"]
         direction LR
-        rf["랜덤 포레스트 학습"] --> evaluate["성능 평가"]
+        rf("랜덤 포레스트 학습") --> evaluate("성능 평가")
     end
     
     subgraph rl_integration["강화학습 통합 과정"]
         direction LR
-        state["상태 정의"] --> dqn["DQN 네트워크"] --> action["액션 선택"]
+        state("상태 정의") --> dqn("DQN 네트워크") --> action("액션 선택")
     end
     
     subgraph detection["실시간 탐지 과정"]
         direction LR
-        monitor["트래픽 모니터링"] --> analyze["패킷 분석"] --> respond["자동 대응"]
+        monitor("트래픽 모니터링") --> analyze("패킷 분석") --> respond("자동 대응")
     end
     
     %% 단계와 세부 과정 연결
-    step1 ---- collection
-    step2 ---- preprocessing
-    step3 ---- training
-    step4 ---- rl_integration
-    step5 ---- detection
+    step1 --- collection
+    step2 --- preprocessing
+    step3 --- training
+    step4 --- rl_integration
+    step5 --- detection
     
     %% 스타일 정의
-    classDef mainStep fill:#f96,stroke:#333,stroke-width:2px,color:white;
-    class step1,step2,step3,step4,step5,step6 mainStep;
+    style step1 fill:#f96,stroke:#333,stroke-width:2px,color:white
+    style step2 fill:#f96,stroke:#333,stroke-width:2px,color:white
+    style step3 fill:#f96,stroke:#333,stroke-width:2px,color:white
+    style step4 fill:#f96,stroke:#333,stroke-width:2px,color:white
+    style step5 fill:#f96,stroke:#333,stroke-width:2px,color:white
+    style step6 fill:#f96,stroke:#333,stroke-width:2px,color:white
     
-    classDef processBox fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black;
-    class collection,preprocessing,training,rl_integration,detection processBox;
+    style collection fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black
+    style preprocessing fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black
+    style training fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black
+    style rl_integration fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black
+    style detection fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black
     
-    classDef nodeText fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black;
-    class interface,generator,extract,normalize,encode,rf,evaluate,state,dqn,action,monitor,analyze,respond nodeText;
+    style interface fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
+    style generator fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
+    style extract fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
+    style normalize fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
+    style encode fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
+    style rf fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
+    style evaluate fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
+    style state fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
+    style dqn fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
+    style action fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
+    style monitor fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
+    style analyze fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
+    style respond fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
     
-    classDef subgraphText color:black;
-    class collection,preprocessing,training,rl_integration,detection subgraphText;
-    
-    linkStyle default stroke:#333,stroke-width:1.5px;
-    linkStyle 5 stroke:#333,stroke-width:1.5px,stroke-dasharray:5;
+    linkStyle default stroke:#333,stroke-width:1.5px
+    linkStyle 5 stroke:#333,stroke-width:1.5px,stroke-dasharray:5
 ```
 
 ## 🌟 하이브리드 접근 방식의 특징
