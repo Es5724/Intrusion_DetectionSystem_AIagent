@@ -98,41 +98,41 @@ Intrusion_DetectionSystem/
 ```mermaid
 flowchart TB
     %% 주요 단계 정의
-    step1[1. 데이터 수집]
-    step2[2. 데이터 전처리]
-    step3[3. 모델 학습]
-    step4[4. 강화학습 통합]
-    step5[5. 실시간 탐지 및 차단]
-    step6[6. 모델 업데이트]
+    step1["1. 데이터 수집"]
+    step2["2. 데이터 전처리"]
+    step3["3. 모델 학습"]
+    step4["4. 강화학습 통합"]
+    step5["5. 실시간 탐지 및 차단"]
+    step6["6. 모델 업데이트"]
     
     %% 단계별 연결
     step1 --> step2 --> step3 --> step4 --> step5 --> step6
     step6 -.-> step1
     
     %% 각 단계의 세부 과정
-    subgraph collection[데이터 수집 과정]
+    subgraph collection["데이터 수집 과정"]
         direction LR
-        interface[네트워크 인터페이스\n패킷 캡처] --> generator[공격성 트래픽\n생성]
+        interface["네트워크 인터페이스 패킷 캡처"] --> generator["공격성 트래픽 생성"]
     end
     
-    subgraph preprocessing[데이터 전처리 과정]
+    subgraph preprocessing["데이터 전처리 과정"]
         direction LR
-        extract[특성 추출] --> normalize[정규화] --> encode[범주형 데이터 인코딩]
+        extract["특성 추출"] --> normalize["정규화"] --> encode["범주형 데이터 인코딩"]
     end
     
-    subgraph training[모델 학습 과정]
+    subgraph training["모델 학습 과정"]
         direction LR
-        rf[랜덤 포레스트 학습] --> evaluate[성능 평가]
+        rf["랜덤 포레스트 학습"] --> evaluate["성능 평가"]
     end
     
-    subgraph rl_integration[강화학습 통합 과정]
+    subgraph rl_integration["강화학습 통합 과정"]
         direction LR
-        state[상태 정의] --> dqn[DQN 네트워크] --> action[액션 선택]
+        state["상태 정의"] --> dqn["DQN 네트워크"] --> action["액션 선택"]
     end
     
-    subgraph detection[실시간 탐지 과정]
+    subgraph detection["실시간 탐지 과정"]
         direction LR
-        monitor[트래픽 모니터링] --> analyze[패킷 분석] --> respond[자동 대응]
+        monitor["트래픽 모니터링"] --> analyze["패킷 분석"] --> respond["자동 대응"]
     end
     
     %% 단계와 세부 과정 연결
@@ -165,11 +165,11 @@ flowchart TB
 
 ```mermaid
 flowchart TD
-    packet[패킷 데이터] --> rf[랜덤 포레스트 1차 분류]
-    rf --> feature[분류 결과를 특성으로 추가]
-    feature --> state[강화학습 환경 상태로 활용]
-    state --> dqn[DQN 에이전트]
-    dqn --> action[최적의 대응 조치 선택]
+    packet["패킷 데이터"] --> rf["랜덤 포레스트 1차 분류"]
+    rf --> feature["분류 결과를 특성으로 추가"]
+    feature --> state["강화학습 환경 상태로 활용"]
+    state --> dqn["DQN 에이전트"]
+    dqn --> action["최적의 대응 조치 선택"]
     
     classDef highlight fill:#f96,stroke:#333,stroke-width:2px,color:white;
     classDef normal fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black;
@@ -281,33 +281,33 @@ DQNAgent 클래스는 심층 Q 네트워크를 구현하여 패킷에 대한 최
 
 ```mermaid
 flowchart LR
-    subgraph 데이터수집[1. 데이터 수집 단계]
-        packet[packet_collector.py]
-        traffic[TrafficGeneratorApp.py]
+    subgraph 데이터수집["1. 데이터 수집 단계"]
+        packet["packet_collector.py"]
+        traffic["TrafficGeneratorApp.py"]
         packet --> traffic
     end
 
-    subgraph 전처리[2. 데이터 전처리 단계]
-        preprocess[DataPreprocessingApp.py]
-        feature[특성 추출 및 가공]
+    subgraph 전처리["2. 데이터 전처리 단계"]
+        preprocess["DataPreprocessingApp.py"]
+        feature["특성 추출 및 가공"]
         preprocess --> feature
     end
 
-    subgraph 모델학습[3. 모델 학습 단계]
-        ml[ml_models.py]
-        evaluation[성능 평가 및 시각화]
+    subgraph 모델학습["3. 모델 학습 단계"]
+        ml["ml_models.py"]
+        evaluation["성능 평가 및 시각화"]
         ml --> evaluation
     end
 
-    subgraph 강화학습[4. 강화학습 통합 단계]
-        env[NetworkEnv]
-        dqn[DQNAgent]
+    subgraph 강화학습["4. 강화학습 통합 단계"]
+        env["NetworkEnv"]
+        dqn["DQNAgent"]
         env --> dqn
     end
 
-    subgraph 실시간적용[5. 실시간 적용 단계]
-        agent[IDSAgent_RL.py]
-        response[위협 탐지 및 자동 대응]
+    subgraph 실시간적용["5. 실시간 적용 단계"]
+        agent["IDSAgent_RL.py"]
+        response["위협 탐지 및 자동 대응"]
         agent --> response
     end
 
@@ -349,41 +349,41 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    main[IDSAgent_RL.py\n메인 에이전트]
+    main["IDSAgent_RL.py 메인 에이전트"]
     
     main --> data
     main --> model
     main --> realtime
     
     %% 모듈 배치
-    subgraph data[데이터 수집 모듈]
+    subgraph data["데이터 수집 모듈"]
         direction LR
-        collector[packet_collector.py] --> generator[TrafficGeneratorApp]
+        collector["packet_collector.py"] --> generator["TrafficGeneratorApp"]
     end
     
-    subgraph preprocess[데이터 전처리 모듈]
+    subgraph preprocess["데이터 전처리 모듈"]
         direction LR
-        preprocessing[DataPreprocessingApp] --> features[특성 추출 및 변환]
+        preprocessing["DataPreprocessingApp"] --> features["특성 추출 및 변환"]
     end
     
-    subgraph model[모델 학습 모듈]
+    subgraph model["모델 학습 모듈"]
         direction LR
-        ml[ml_models.py] --> rf[랜덤 포레스트 학습] --> eval[성능 평가 및 시각화]
+        ml["ml_models.py"] --> rf["랜덤 포레스트 학습"] --> eval["성능 평가 및 시각화"]
     end
     
-    subgraph rl[강화학습 모듈]
+    subgraph rl["강화학습 모듈"]
         direction LR
-        env[NetworkEnv] --> agent[DQNAgent] --> train[모델 학습 및 평가]
+        env["NetworkEnv"] --> agent["DQNAgent"] --> train["모델 학습 및 평가"]
     end
     
-    subgraph realtime[실시간 적용 모듈]
+    subgraph realtime["실시간 적용 모듈"]
         direction LR
-        reinforce[reinforcement_learning] --> dqn[DQN 에이전트 적용] --> detect[위협 탐지 및 대응]
+        reinforce["reinforcement_learning"] --> dqn["DQN 에이전트 적용"] --> detect["위협 탐지 및 대응"]
     end
     
-    subgraph ui[사용자 인터페이스 모듈]
+    subgraph ui["사용자 인터페이스 모듈"]
         direction LR
-        prep[data_preparation.py] --> components[GUI 컴포넌트] --> visual[시각화 및 보고]
+        prep["data_preparation.py"] --> components["GUI 컴포넌트"] --> visual["시각화 및 보고"]
     end
     
     %% 모듈 간 연결
