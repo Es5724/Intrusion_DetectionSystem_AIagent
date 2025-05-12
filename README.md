@@ -96,82 +96,56 @@ Intrusion_DetectionSystem/
 - 변화하는 네트워크 환경에 적응
 
 ```mermaid
-flowchart TB
-    %% 주요 단계 정의
-    step1("1. 데이터 수집<br>- 네트워크 패킷 캡처<br>- 공격 트래픽 생성")
-    step2("2. 데이터 전처리<br>- 특성 추출<br>- 정규화 및 인코딩")
-    step3("3. 모델 학습<br>- 랜덤 포레스트 학습<br>- 패턴 식별 및 평가")
-    step4("4. 강화학습 통합<br>- 예측 결과를 상태로 활용<br>- DQN 대응 정책 학습")
-    step5("5. 실시간 탐지/차단<br>- 트래픽 모니터링<br>- 자동 대응 조치")
-    step6("6. 모델 업데이트<br>- 지속적 데이터 수집<br>- 환경 적응형 재학습")
+graph TB
+    %% 단순한 단계 정의
+    s1(1-데이터수집) --> s2(2-데이터전처리)
+    s2 --> s3(3-모델학습)
+    s3 --> s4(4-강화학습통합)
+    s4 --> s5(5-실시간탐지)
+    s5 --> s6(6-모델업데이트)
+    s6 -.-> s1
     
-    %% 단계별 연결
-    step1 --> step2 --> step3 --> step4 --> step5 --> step6
-    step6 -.-> step1
-    
-    %% 각 단계의 세부 과정
-    subgraph collection["데이터 수집 과정"]
-        direction LR
-        interface("네트워크 인터페이스 패킷 캡처") --> generator("공격성 트래픽 생성")
+    %% 세부 과정
+    subgraph 수집[데이터 수집]
+        i1(네트워크 캡처) --> i2(트래픽 생성)
     end
     
-    subgraph preprocessing["데이터 전처리 과정"]
-        direction LR
-        extract("특성 추출") --> normalize("정규화") --> encode("범주형 데이터 인코딩")
+    subgraph 전처리[데이터 전처리]
+        p1(특성 추출) --> p2(정규화) --> p3(인코딩)
     end
     
-    subgraph training["모델 학습 과정"]
-        direction LR
-        rf("랜덤 포레스트 학습") --> evaluate("성능 평가")
+    subgraph 학습[모델 학습]
+        m1(랜덤 포레스트) --> m2(성능 평가)
     end
     
-    subgraph rl_integration["강화학습 통합 과정"]
-        direction LR
-        state("상태 정의") --> dqn("DQN 네트워크") --> action("액션 선택")
+    subgraph 통합[강화학습 통합]
+        r1(상태 정의) --> r2(DQN) --> r3(액션)
     end
     
-    subgraph detection["실시간 탐지 과정"]
-        direction LR
-        monitor("트래픽 모니터링") --> analyze("패킷 분석") --> respond("자동 대응")
+    subgraph 적용[실시간 적용]
+        a1(모니터링) --> a2(분석) --> a3(대응)
     end
     
-    %% 단계와 세부 과정 연결
-    step1 --- collection
-    step2 --- preprocessing
-    step3 --- training
-    step4 --- rl_integration
-    step5 --- detection
+    %% 연결
+    s1 --- 수집
+    s2 --- 전처리
+    s3 --- 학습
+    s4 --- 통합
+    s5 --- 적용
     
-    %% 스타일 정의
-    style step1 fill:#f96,stroke:#333,stroke-width:2px,color:white
-    style step2 fill:#f96,stroke:#333,stroke-width:2px,color:white
-    style step3 fill:#f96,stroke:#333,stroke-width:2px,color:white
-    style step4 fill:#f96,stroke:#333,stroke-width:2px,color:white
-    style step5 fill:#f96,stroke:#333,stroke-width:2px,color:white
-    style step6 fill:#f96,stroke:#333,stroke-width:2px,color:white
+    %% 스타일
+    style s1 fill:#f96,color:white,stroke:#333
+    style s2 fill:#f96,color:white,stroke:#333
+    style s3 fill:#f96,color:white,stroke:#333
+    style s4 fill:#f96,color:white,stroke:#333
+    style s5 fill:#f96,color:white,stroke:#333
+    style s6 fill:#f96,color:white,stroke:#333
     
-    style collection fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black
-    style preprocessing fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black
-    style training fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black
-    style rl_integration fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black
-    style detection fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black
-    
-    style interface fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    style generator fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    style extract fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    style normalize fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    style encode fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    style rf fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    style evaluate fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    style state fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    style dqn fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    style action fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    style monitor fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    style analyze fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    style respond fill:#f2f2f2,stroke:#333,stroke-width:1px,color:black
-    
-    linkStyle default stroke:#333,stroke-width:1.5px
-    linkStyle 5 stroke:#333,stroke-width:1.5px,stroke-dasharray:5
+    style 수집 fill:#e6f7ff,stroke:#333
+    style 전처리 fill:#e6f7ff,stroke:#333
+    style 학습 fill:#e6f7ff,stroke:#333
+    style 통합 fill:#e6f7ff,stroke:#333
+    style 적용 fill:#e6f7ff,stroke:#333
 ```
 
 ## 🌟 하이브리드 접근 방식의 특징
