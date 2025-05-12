@@ -18,6 +18,11 @@ import winreg
 import psutil
 import re
 
+# 모듈 경로를 부모 디렉토리로 설정하기 위한 코드 추가
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)  # components 디렉토리의 부모 (scripts)
+sys.path.append(parent_dir)
+
 # 패킷 캡처 기능을 모듈화
 class PacketCapture:
     def __init__(self, interface, count=100):
@@ -190,6 +195,32 @@ class PacketCaptureCore:
             packets.append(packet)
         return pd.DataFrame(packets)
 
+# 파일 로드 스레드 정의가 없을 수 있으므로 추가
+class FileLoadThread(QThread):
+    progress = pyqtSignal(int, int)
+    finished = pyqtSignal(bool)
+    error = pyqtSignal(str)
+    
+    def __init__(self, core, file_path):
+        super().__init__()
+        self.core = core
+        self.file_path = file_path
+        
+    def run(self):
+        try:
+            # 간단한 파일 읽기 로직
+            print(f"파일 '{self.file_path}' 로드 중...")
+            self.progress.emit(0, 100)
+            
+            # 파일 로드 로직은 실제로 파일을 읽는 코드로 대체해야 함
+            # 여기서는 예시로 제공
+            
+            self.progress.emit(100, 100)
+            self.finished.emit(True)
+        except Exception as e:
+            self.error.emit(str(e))
+            self.finished.emit(False)
+
 # MainApp 클래스의 리팩터링
 class MainApp(QMainWindow):
     def __init__(self, parent=None):
@@ -246,6 +277,20 @@ class MainApp(QMainWindow):
         # 처음에는 뒤로가기 버튼 비활성화 (메인 앱이 없을 경우)
         if self.parent_app is None:
             self.back_button.setVisible(False)
+    
+    def go_back(self):
+        """메인 화면으로 돌아가기"""
+        if self.parent_app:
+            try:
+                # 캡처 중이라면 중지
+                if self.core.is_running:
+                    self.stop_capture()
+                    
+                # 부모 앱의 메인 화면 표시 메서드 호출
+                self.parent_app.show_main_screen()
+            except Exception as e:
+                print(f"뒤로가기 중 오류 발생: {e}")
+                QMessageBox.warning(self, "오류", "뒤로가기 실패")
     
     def setup_timer(self):
         """타이머를 설정합니다."""
@@ -322,23 +367,9 @@ class MainApp(QMainWindow):
         """업데이트를 확인합니다."""
         pass
 
-    def go_back(self):
-        """메인 화면으로 돌아가기"""
-        if self.parent_app:
-            try:
-                # 캡처 중이라면 중지
-                if self.core.is_running:
-                    self.stop_capture()
-                    
-                # 부모 앱의 메인 화면 표시 메서드 호출
-                self.parent_app.show_main_screen()
-            except Exception as e:
-                print(f"뒤로가기 중 오류 발생: {e}")
-                QMessageBox.warning(self, "오류", "뒤로가기 실패")
-
 # 메인 함수
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainApp()
     window.show()
-    app.exec()
+    sys.exit(app.exec()) 
