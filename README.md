@@ -149,7 +149,8 @@ flowchart TB
     classDef processBox fill:#e6f7ff,stroke:#333,stroke-width:1px,color:black;
     class collection,preprocessing,training,rl_integration,detection processBox;
     
-    classDef default color:black;
+    classDef nodeText color:black;
+    class interface,generator,extract,normalize,encode,rf,evaluate,state,dqn,action,monitor,analyze,respond nodeText;
     
     linkStyle default stroke:#333,stroke-width:1.5px;
     linkStyle 5 stroke:#333,stroke-width:1.5px,stroke-dasharray:5;
@@ -312,8 +313,8 @@ flowchart LR
     모델학습 --> 강화학습
     강화학습 --> 실시간적용
     
-    classDef default color:black;
-    classDef stageClass color:black;
+    classDef nodeText color:black;
+    class packet,traffic,preprocess,feature,ml,evaluation,env,dqn,agent,response nodeText;
 ```
 
 1. **데이터 수집 단계**:
@@ -391,7 +392,8 @@ flowchart TB
     classDef moduleHeader fill:#f96,stroke:#333,stroke-width:2px,color:black;
     class main moduleHeader
     
-    classDef default color:black;
+    classDef nodeText color:black;
+    class collector,generator,preprocessing,features,ml,rf,eval,env,agent,train,reinforce,dqn,detect,prep,components,visual nodeText;
     
     linkStyle default stroke:#333,stroke-width:2px;
 ```
