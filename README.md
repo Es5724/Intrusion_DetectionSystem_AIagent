@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/AI-Reinforcement%20Learning-brightgreen" alt="AI">
 </div>
 
-## 0. 📑 목차
+## 0. 📑목차
 
 1. [📌 프로젝트 개요](#1-프로젝트-개요)
 2. [👥 팀원 정보](#2-팀원-정보)
@@ -36,19 +36,23 @@
 ## 3. 🏗️프로젝트 구조
 
 ```
-Intrusion_DetectionSystem/
-├── IDSAgent_RL.py 
-├── scripts/
-│   ├── data_preparation.py 
-│   ├── components/
-│   │   ├── packet_collector.py
-│   │   ├── TrafficGeneratorApp.py
-│   │   └── DataPreprocessingApp.py
-├── modules/
-│   ├── reinforcement_learning.py
-│   ├── ml_models.py
-│   ├── packet_capture.py
-│   └── utils.py
+📁 Intrusion_DetectionSystem/
+│
+├── 📄 IDSAgent_RL.py                    # 메인 에이전트 (시스템 핵심)
+│
+├── 📁 scripts/                          # 실행 스크립트
+│   ├── 📄 data_preparation.py           # 데이터 준비 인터페이스
+│   │
+│   └── 📁 components/                   # UI 컴포넌트
+│       ├── 📄 packet_collector.py       # 패킷 수집 모듈
+│       ├── 📄 TrafficGeneratorApp.py    # 트래픽 생성기
+│       └── 📄 DataPreprocessingApp.py   # 데이터 전처리 앱
+│
+└── 📁 modules/                          # 핵심 기능 모듈
+    ├── 📄 reinforcement_learning.py     # 강화학습 구현
+    ├── 📄 ml_models.py                  # 머신러닝 모델
+    ├── 📄 packet_capture.py             # 패킷 캡처 기능
+    └── 📄 utils.py                      # 유틸리티 함수
 ```
 
 ## 🛠️ 사용된 모듈 및 라이브러리
