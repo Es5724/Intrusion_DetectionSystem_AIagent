@@ -127,7 +127,7 @@ class MainApplication(QMainWindow):
         title_label.setFont(title_font)
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setStyleSheet("""
-            color: #2C3E50;
+            color: 7F8C8D;
             margin-bottom: 10px;
             padding: 5px;
             border-bottom: 2px solid #3498DB;
@@ -158,17 +158,17 @@ class MainApplication(QMainWindow):
         exit_button = self.add_main_button(button_layout, "종료", self.close)
         exit_button.setStyleSheet("""
             QPushButton {
-                background-color: #CC4444;
+                background-color: #5b5b5b;
                 color: white;
                 border-radius: 5px;
                 font-size: 14px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #DD5555;
+                background-color: ;
             }
             QPushButton:pressed {
-                background-color: #BB3333;
+                background-color: #5b5b5b;
             }
         """)
         
@@ -195,17 +195,17 @@ class MainApplication(QMainWindow):
         # 버튼 스타일 설정
         button.setStyleSheet("""
             QPushButton {
-                background-color: #336699;
+                background-color: #5b5b5b;
                 color: white;
                 border-radius: 5px;
                 font-size: 14px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #4477AA;
+                background-color: #5b5b5b;
             }
             QPushButton:pressed {
-                background-color: #225588;
+                background-color: #5b5b5b;
             }
         """)
         
