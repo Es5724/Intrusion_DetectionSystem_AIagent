@@ -5,7 +5,11 @@ import sys
 import subprocess
 
 # 필요한 라이브러리 확인 및 설치
-required_packages = ['gym', 'torch', 'scapy', 'pandas', 'numpy', 'matplotlib', 'seaborn', 'joblib']
+required_packages = [
+    'gym', 'torch', 'scapy', 'pandas', 'numpy', 'matplotlib', 'seaborn', 'joblib', 'scikit-learn','PyQt6',     
+    'pypcap', 'dpkt', 'netfilterqueue', 'psutil',
+    'ipaddress', 'pywin32','pyyaml'
+]
 
 def install_missing_packages():
     for package in required_packages:
