@@ -33,19 +33,32 @@ except ImportError:
     print("scapy 모듈 설치 완료!")
 
 class NetworkEnv(gym.Env):
-    def __init__(self, max_steps=1000):
+    def __init__(self, max_steps=1000, mode="lightweight"):
         super(NetworkEnv, self).__init__()
+        
+        # 운영 모드 설정
+        self.mode = mode
         
         # 액션 스페이스 정의 (0: 허용, 1: 차단, 2: 모니터링)
         self.action_space = spaces.Discrete(3)
         
         # 관찰 스페이스 정의 (패킷 특성들)
-        self.observation_space = spaces.Box(
-            low=-np.inf, 
-            high=np.inf, 
-            shape=(7,),  # 7개의 특성: [src_ip, dst_ip, protocol, length, ttl, flags, rf_prob]
-            dtype=np.float32
-        )
+        if self.mode == "performance":
+            # 고성능 모드: 기본 7개 특성 + 수리카타 5개 특성 = 12개 특성
+            self.observation_space = spaces.Box(
+                low=-np.inf, 
+                high=np.inf, 
+                shape=(12,),  # 12개의 특성
+                dtype=np.float32
+            )
+        else:
+            # 경량 모드: 기본 7개의 특성
+            self.observation_space = spaces.Box(
+                low=-np.inf, 
+                high=np.inf, 
+                shape=(7,),  # 7개의 특성: [src_ip, dst_ip, protocol, length, ttl, flags, rf_prob]
+                dtype=np.float32
+            )
         
         self.max_steps = max_steps
         self.current_step = 0
@@ -60,16 +73,56 @@ class NetworkEnv(gym.Env):
                 self.rf_model = joblib.load('random_forest_model.pkl')
         except Exception as e:
             print(f"랜덤포레스트 모델 로드 실패: {e}")
+
+    def set_mode(self, mode):
+        """운영 모드 설정
+        
+        Args:
+            mode (str): 'lightweight' 또는 'performance'
+        """
+        if mode not in ["lightweight", "performance"]:
+            raise ValueError("모드는 'lightweight' 또는 'performance'여야 합니다.")
+            
+        # 모드가 변경되면 관찰 공간 업데이트
+        if self.mode != mode:
+            self.mode = mode
+            
+            # 관찰 공간 재정의
+            if self.mode == "performance":
+                self.observation_space = spaces.Box(
+                    low=-np.inf, 
+                    high=np.inf, 
+                    shape=(12,),  # 12개의 특성
+                    dtype=np.float32
+                )
+            else:
+                self.observation_space = spaces.Box(
+                    low=-np.inf, 
+                    high=np.inf, 
+                    shape=(7,),  # 7개의 특성
+                    dtype=np.float32
+                )
         
     def reset(self):
         self.current_step = 0
         self.total_reward = 0
         self.packet_buffer = []
-        # 초기 상태 반환
-        return np.zeros(7, dtype=np.float32)
+        
+        # 모드에 맞는 초기 상태 반환
+        if self.mode == "performance":
+            return np.zeros(12, dtype=np.float32)
+        else:
+            return np.zeros(7, dtype=np.float32)
     
     def _extract_packet_features(self, packet):
-        """패킷에서 특성 추출"""
+        """패킷에서 특성 추출 - 모드에 따라 다른 특성 세트 반환"""
+        if self.mode == "performance":
+            return self._extract_enhanced_features(packet)
+        else:
+            return self._extract_basic_features(packet)
+    
+    def _extract_basic_features(self, packet):
+        """기본 특성 추출 (경량 모드)"""
         features = np.zeros(7, dtype=np.float32)
         
         if IP in packet:
@@ -104,6 +157,63 @@ class NetworkEnv(gym.Env):
         
         return features
     
+    def _extract_enhanced_features(self, packet):
+        """고성능 모드용 확장 특성 추출 (기본 특성 + 수리카타 특성)"""
+        # 먼저 기본 특성 추출
+        basic_features = self._extract_basic_features(packet)
+        
+        # 고성능 모드 확장 특성 생성
+        features = np.zeros(12, dtype=np.float32)
+        
+        # 기본 특성 복사
+        features[:7] = basic_features
+        
+        # 수리카타 특성이 패킷에 있는 경우 추출
+        if hasattr(packet, 'suricata_alert') and packet.suricata_alert:
+            # 수리카타 경고 여부 (0/1)
+            features[7] = 1.0
+            
+            # 시그니처 우선순위 (정규화: 1-4 -> 0-1)
+            severity = getattr(packet, 'suricata_severity', 2)
+            features[8] = (severity - 1) / 3.0 if 1 <= severity <= 4 else 0.5
+            
+            # 카테고리 인코딩 (임의의 간단한 인코딩)
+            category = getattr(packet, 'suricata_category', 'unknown')
+            category_code = self._encode_category(category)
+            features[9] = category_code
+            
+            # 시그니처 ID (정규화)
+            sig_id = getattr(packet, 'suricata_signature_id', 0)
+            features[10] = min(sig_id / 10000.0, 1.0)  # 임의로 10000으로 나눔
+            
+            # 수리카타 신뢰도
+            features[11] = getattr(packet, 'suricata_confidence', 0.8)
+        else:
+            # 수리카타 특성이 없는 경우 기본값 설정
+            features[7] = 0.0  # 수리카타 경고 없음
+            features[8:12] = 0.5  # 다른 특성들은 중간값
+            
+        return features
+            
+    def _encode_category(self, category):
+        """수리카타 카테고리를 숫자로 인코딩"""
+        categories = {
+            "unknown": 0.1,
+            "not-suspicious": 0.2,
+            "bad-unknown": 0.3,
+            "attempted-recon": 0.4,
+            "successful-recon-limited": 0.5,
+            "successful-recon-largescale": 0.6,
+            "attempted-dos": 0.7,
+            "successful-dos": 0.8,
+            "attempted-user": 0.85,
+            "unsuccessful-user": 0.86,
+            "successful-user": 0.9,
+            "attempted-admin": 0.95,
+            "successful-admin": 1.0
+        }
+        return categories.get(category.lower(), 0.5)
+    
     def step(self, action):
         self.current_step += 1
         
@@ -112,7 +222,11 @@ class NetworkEnv(gym.Env):
             packet = sniff(count=1, timeout=1)[0]
             state = self._extract_packet_features(packet)
         except:
-            state = np.zeros(7, dtype=np.float32)
+            # 오류 시 빈 상태 반환 (모드에 맞게)
+            if self.mode == "performance":
+                state = np.zeros(12, dtype=np.float32)
+            else:
+                state = np.zeros(7, dtype=np.float32)
         
         # 보상 계산
         reward = self._calculate_reward(action, packet if 'packet' in locals() else None)
@@ -130,14 +244,20 @@ class NetworkEnv(gym.Env):
         if packet is None:
             return -0.1  # 패킷 캡처 실패 페널티
         
+        # 수리카타 경고가 있는 패킷 처리 (고성능 모드)
+        is_malicious = not self._is_safe_packet(packet)
+        if self.mode == "performance" and hasattr(packet, 'suricata_alert') and packet.suricata_alert:
+            # 수리카타 경고가 있으면 위험도 증가
+            is_malicious = True
+            
         # 기본 보상
         if action == 0:  # 허용
-            if self._is_safe_packet(packet):
+            if not is_malicious:
                 reward += 1.0
             else:
                 reward -= 2.0
         elif action == 1:  # 차단
-            if not self._is_safe_packet(packet):
+            if is_malicious:
                 reward += 2.0
             else:
                 reward -= 1.0
@@ -154,6 +274,11 @@ class NetworkEnv(gym.Env):
     
     def _is_safe_packet(self, packet):
         """패킷의 안전성 판단"""
+        # 수리카타 경고가 있으면 안전하지 않음
+        if self.mode == "performance" and hasattr(packet, 'suricata_alert') and packet.suricata_alert:
+            return False
+            
+        # 랜덤포레스트 기반 판단
         if self.rf_model is not None:
             try:
                 packet_df = pd.DataFrame({
@@ -169,22 +294,43 @@ class NetworkEnv(gym.Env):
         return True  # 모델이 없으면 안전하다고 가정
 
 class DQNAgent:
-    def __init__(self, state_size, action_size):
+    def __init__(self, state_size, action_size, mode="lightweight"):
         self.state_size = state_size
         self.action_size = action_size
+        self.mode = mode
         self.memory = deque(maxlen=2000)
         self.gamma = 0.95    # 할인율
         self.epsilon = 1.0   # 탐험률
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
         self.learning_rate = 0.001
-        self.model = self._build_model()
-        self.target_model = self._build_model()
+        
+        # 모드별 모델 구성
+        if self.mode == "performance":
+            self.model = self._build_performance_model()
+            self.target_model = self._build_performance_model()
+        else:
+            self.model = self._build_lightweight_model()
+            self.target_model = self._build_lightweight_model()
+            
         self.update_target_model()
         
-    def _build_model(self):
+    def _build_lightweight_model(self):
+        """경량 모드용 신경망 모델 (7개 특성 입력)"""
         model = nn.Sequential(
-            nn.Linear(self.state_size, 64),
+            nn.Linear(7, 32),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(32, 16),
+            nn.ReLU(),
+            nn.Linear(16, self.action_size)
+        )
+        return model
+        
+    def _build_performance_model(self):
+        """고성능 모드용 신경망 모델 (12개 특성 입력)"""
+        model = nn.Sequential(
+            nn.Linear(12, 64),
             nn.ReLU(),
             nn.Dropout(0.2),
             nn.Linear(64, 32),
@@ -194,8 +340,71 @@ class DQNAgent:
         )
         return model
     
+    def _build_model(self):
+        """현재 모드에 맞는 모델 생성"""
+        if self.mode == "performance":
+            return self._build_performance_model()
+        else:
+            return self._build_lightweight_model()
+    
     def update_target_model(self):
         self.target_model.load_state_dict(self.model.state_dict())
+    
+    def switch_mode(self, new_mode):
+        """모드 전환
+        
+        Args:
+            new_mode (str): 'lightweight' 또는 'performance'
+            
+        Returns:
+            bool: 성공 여부
+        """
+        if new_mode not in ["lightweight", "performance"]:
+            print("모드는 'lightweight' 또는 'performance'여야 합니다.")
+            return False
+            
+        if new_mode == self.mode:
+            return True
+            
+        print(f"{self.mode} 모드에서 {new_mode} 모드로 전환 중...")
+        
+        # 현재 모델 저장
+        self._save_current_model()
+        
+        # 모드 전환
+        self.mode = new_mode
+        
+        # 새 모드에 맞는 모델 생성
+        if self.mode == "performance":
+            self.state_size = 12
+            self.model = self._build_performance_model()
+            self.target_model = self._build_performance_model()
+        else:
+            self.state_size = 7
+            self.model = self._build_lightweight_model()
+            self.target_model = self._build_lightweight_model()
+            
+        # 저장된 모델이 있으면 로드
+        self._load_mode_model()
+        
+        print(f"{new_mode} 모드로 전환 완료")
+        return True
+    
+    def _save_current_model(self):
+        """현재 모드의 모델 저장"""
+        filename = f"dqn_model_{self.mode}.pth"
+        torch.save(self.model.state_dict(), filename)
+        print(f"모델이 {filename}에 저장되었습니다.")
+    
+    def _load_mode_model(self):
+        """현재 모드에 맞는 모델 파일 로드"""
+        filename = f"dqn_model_{self.mode}.pth"
+        if os.path.exists(filename):
+            self.model.load_state_dict(torch.load(filename))
+            self.target_model.load_state_dict(self.model.state_dict())
+            print(f"모델이 {filename}에서 로드되었습니다.")
+            return True
+        return False
     
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
@@ -282,13 +491,17 @@ def plot_training_results(rewards):
     plt.grid(True)
     plt.show()
 
-def save_model(agent, filename='dqn_model.pth'):
+def save_model(agent, filename=None):
     """강화학습 모델 저장"""
+    if filename is None:
+        filename = f"dqn_model_{agent.mode}.pth"
     torch.save(agent.model.state_dict(), filename)
     print(f"모델이 {filename}에 저장되었습니다.")
     
-def load_model(agent, filename='dqn_model.pth'):
+def load_model(agent, filename=None):
     """강화학습 모델 로드"""
+    if filename is None:
+        filename = f"dqn_model_{agent.mode}.pth"
     if os.path.exists(filename):
         agent.model.load_state_dict(torch.load(filename))
         agent.target_model.load_state_dict(agent.model.state_dict())

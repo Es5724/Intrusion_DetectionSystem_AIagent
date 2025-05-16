@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """
 방어 메커니즘 모듈 - IDS 시스템의 공격 대응 기능을 제공
 
 이 모듈은 침입 탐지 시스템에서 악의적인 트래픽을 차단하고,
 관리자에게 알림을 보내며, 자동 방어 기능을 제공합니다.
 """
-
 import os
 import sys
 import time
@@ -20,6 +18,13 @@ import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
+
+# 수리카타 매니저 추가 시도
+try:
+    from .suricata_manager import SuricataManager
+    SURICATA_SUPPORT = True
+except ImportError:
+    SURICATA_SUPPORT = False
 
 # 로깅 설정
 logging.basicConfig(
@@ -35,18 +40,97 @@ logger = logging.getLogger("DefenseMechanism")
 class DefenseManager:
     """방어 메커니즘 통합 관리 클래스"""
     
-    def __init__(self, config_file=None):
-        """방어 메커니즘 초기화"""
+    def __init__(self, config_file=None, mode="lightweight"):
+        """방어 메커니즘 초기화
+        
+        Args:
+            config_file (str): 설정 파일 경로
+            mode (str): 운영 모드 ('lightweight' 또는 'performance')
+        """
+        self.mode = mode
         self.blocker = BlockMaliciousTraffic()
         self.alert_system = AlertSystem(config_file)
         self.auto_defense = AutoDefenseActions()
         self.is_active = True
         self.recent_threats = []
         self.thread_lock = threading.Lock()
-        logger.info("방어 메커니즘 관리자 초기화 완료")
+        
+        # 수리카타 관련 속성
+        self.suricata_manager = None
+        self.suricata_enabled = False
         
         # 설정 파일 로드
         self.config = self._load_config(config_file)
+        
+        # 모드에 따른 초기화
+        self._initialize_by_mode()
+        
+        logger.info(f"방어 메커니즘 관리자 초기화 완료 (모드: {self.mode})")
+    
+    def _initialize_by_mode(self):
+        """현재 모드에 따른 초기화 수행"""
+        if self.mode == "performance":
+            if SURICATA_SUPPORT:
+                try:
+                    self.suricata_manager = SuricataManager()
+                    self.suricata_manager.initialize()
+                    self.suricata_enabled = True
+                    logger.info("수리카타 통합 모듈 초기화 완료")
+                except Exception as e:
+                    logger.error(f"수리카타 초기화 실패: {e} - 경량 모드로 전환합니다.")
+                    self.mode = "lightweight"
+                    self.suricata_enabled = False
+            else:
+                logger.warning("수리카타 지원 모듈을 찾을 수 없습니다. 경량 모드로 전환합니다.")
+                self.mode = "lightweight"
+        else:
+            logger.info("경량 모드로 실행 중입니다.")
+    
+    def switch_mode(self, new_mode):
+        """운영 모드 전환
+        
+        Args:
+            new_mode (str): 새 운영 모드 ('lightweight' 또는 'performance')
+            
+        Returns:
+            bool: 모드 전환 성공 여부
+        """
+        if new_mode == self.mode:
+            logger.info(f"이미 {new_mode} 모드로 실행 중입니다.")
+            return True
+            
+        logger.info(f"{self.mode} 모드에서 {new_mode} 모드로 전환 시도 중...")
+        
+        if new_mode == "performance":
+            # 경량 → 고성능 모드 전환
+            if not SURICATA_SUPPORT:
+                logger.error("수리카타 지원 모듈이 설치되지 않았습니다. 모드 전환 실패.")
+                return False
+                
+            try:
+                if not self.suricata_manager:
+                    self.suricata_manager = SuricataManager()
+                    
+                self.suricata_manager.initialize()
+                self.suricata_enabled = True
+                self.mode = "performance"
+                logger.info("고성능 모드로 성공적으로 전환되었습니다.")
+                return True
+            except Exception as e:
+                logger.error(f"고성능 모드 전환 실패: {e}")
+                return False
+        else:
+            # 고성능 → 경량 모드 전환
+            if self.suricata_manager and self.suricata_enabled:
+                try:
+                    self.suricata_manager.shutdown()
+                    self.suricata_enabled = False
+                except Exception as e:
+                    logger.warning(f"수리카타 종료 중 경고: {e}")
+                    
+            self.mode = "lightweight"
+            logger.info("경량 모드로 성공적으로 전환되었습니다.")
+            return True
         
     def _load_config(self, config_file):
         """설정 파일 로드"""
@@ -85,19 +169,41 @@ class DefenseManager:
         
         try:
             with self.thread_lock:  # 스레드 안전성 보장
-                # 패킷 분석
+                # 기본 분석 수행
                 prediction, confidence = self.auto_defense.analyze_packet(packet_info)
+                
+                # 고성능 모드에서 수리카타 분석 추가
+                if self.mode == "performance" and self.suricata_enabled and self.suricata_manager:
+                    suricata_result = self.suricata_manager.check_packet(packet_info)
+                    if suricata_result:
+                        # 수리카타 결과로 예측 및 신뢰도 보강
+                        prediction = 1  # 수리카타가 경고를 발생시켰으므로 위협으로 표시
+                        suricata_confidence = suricata_result.get('suricata_confidence', 0.8)
+                        
+                        # 기존 신뢰도와 수리카타 신뢰도 중 높은 값 사용
+                        confidence = max(confidence, suricata_confidence)
+                        
+                        # 패킷 정보에 수리카타 결과 추가
+                        packet_info.update(suricata_result)
+                        
+                        logger.info(f"수리카타 경고 감지: {suricata_result.get('suricata_signature', '알 수 없음')}, "
+                                   f"신뢰도: {suricata_confidence:.2f}")
                 
                 # 위협으로 탐지된 경우 방어 조치
                 if prediction == 1 and confidence >= self.config["defense"]["medium_threat_threshold"]:
-                    source_ip = packet_info.get('source').split(':')[0] if ':' in packet_info.get('source', '') else packet_info.get('source', '')
+                    source_ip = packet_info.get('source', '').split(':')[0] if ':' in packet_info.get('source', '') else packet_info.get('source', '')
                     
                     # 중복 대응 방지 (같은 IP에 대한 연속 대응 제한)
                     if self._check_recent_threat(source_ip):
                         logger.info(f"중복 위협 무시: {source_ip} (최근에 이미 대응함)")
                         return
                     
-                    print(f"\n[경고] 잠재적 공격 탐지: {source_ip} (신뢰도: {confidence:.2f})")
+                    # 수리카타 경고가 있는 경우 추가 정보 출력
+                    if 'suricata_alert' in packet_info and packet_info['suricata_alert']:
+                        print(f"\n[경고] 수리카타 시그니처 탐지: {packet_info.get('suricata_signature', '알 수 없음')}")
+                        print(f"출발지: {source_ip}, 카테고리: {packet_info.get('suricata_category', '알 수 없음')}")
+                    else:
+                        print(f"\n[경고] 잠재적 공격 탐지: {source_ip} (신뢰도: {confidence:.2f})")
                     
                     # 위협 수준에 따른 대응
                     self.auto_defense.execute_defense_action(packet_info, confidence)
@@ -134,7 +240,17 @@ class DefenseManager:
     def register_to_packet_capture(self, packet_capture_core):
         """패킷 캡처 코어에 콜백 함수 등록"""
         if packet_capture_core:
-            return packet_capture_core.register_defense_module(self.handle_packet)
+            result = packet_capture_core.register_defense_module(self.handle_packet)
+            
+            # 고성능 모드인 경우 수리카타 모니터링 시작
+            if result and self.mode == "performance" and self.suricata_enabled and self.suricata_manager:
+                # 패킷 캡처와 동일한 인터페이스에서 수리카타 모니터링 시작
+                interface = packet_capture_core.get_active_interface()
+                if interface:
+                    self.suricata_manager.start_monitoring(interface)
+                    logger.info(f"수리카타 모니터링 시작: 인터페이스 {interface}")
+            
+            return result
         return False
     
     def activate(self):
@@ -145,16 +261,35 @@ class DefenseManager:
     def deactivate(self):
         """방어 메커니즘 비활성화"""
         self.is_active = False
+        # 수리카타 모니터링 중지
+        if self.suricata_enabled and self.suricata_manager:
+            self.suricata_manager.stop_monitoring()
         logger.info("방어 메커니즘 비활성화됨")
     
     def get_status(self):
         """방어 메커니즘 상태 반환"""
-        return {
+        status = {
             "is_active": self.is_active,
+            "mode": self.mode,
             "blocked_ips": self.blocker.get_blocked_ips(),
             "alert_enabled": self.alert_system.email_config["enabled"],
             "config": self.config
         }
+        
+        # 수리카타 관련 상태 추가
+        if self.mode == "performance":
+            status["suricata_enabled"] = self.suricata_enabled
+            if self.suricata_enabled and self.suricata_manager:
+                status["suricata_running"] = self.suricata_manager.is_running
+        
+        return status
+    
+    def shutdown(self):
+        """방어 메커니즘 종료"""
+        self.deactivate()
+        if self.suricata_enabled and self.suricata_manager:
+            self.suricata_manager.shutdown()
+        logger.info("방어 메커니즘 종료됨")
 
 
 class BlockMaliciousTraffic:
@@ -169,29 +304,24 @@ class BlockMaliciousTraffic:
     
     def block_ip(self, ip_address):
         """
-        악의적인 IP 주소를 방화벽에서 차단
-        
+        악의적인 IP 주소를 방화벽에서 차단     
         Args:
             ip_address (str): 차단할 IP 주소
-        
         Returns:
             bool: 차단 성공 여부
         """
         if not self._is_valid_ip(ip_address):
             logger.error(f"유효하지 않은 IP 주소: {ip_address}")
             return False
-        
         if ip_address in self.blocked_ips:
             logger.info(f"이미 차단된 IP 주소: {ip_address}")
             return True
-        
         try:
             # OS별 방화벽 명령어 실행
             if self.os_type == 'nt':  # Windows
                 result = self._block_ip_windows(ip_address)
             else:  # Linux/Unix
                 result = self._block_ip_linux(ip_address)
-            
             if result:
                 self.blocked_ips.add(ip_address)
                 block_event = {
@@ -322,11 +452,9 @@ class BlockMaliciousTraffic:
                 json.dump(self.block_history, f, indent=4)
         except Exception as e:
             logger.error(f"차단 기록 저장 중 오류: {str(e)}")
-
-
+            
 class AlertSystem:
     """관리자에게 알림을 보내는 시스템"""
-    
     def __init__(self, config_file=None):
         """알림 시스템 초기화"""
         self.alerts = []
@@ -675,9 +803,9 @@ class AutoDefenseActions:
             logger.error(f"방어 조치 기록 저장 중 오류: {str(e)}")
 
 # 모듈 내보내기용 함수
-def create_defense_manager(config_file='defense_config.json'):
+def create_defense_manager(config_file='defense_config.json', mode="lightweight"):
     """방어 메커니즘 관리자 생성"""
-    return DefenseManager(config_file)
+    return DefenseManager(config_file, mode=mode)
 
 def register_to_packet_capture(defense_manager, packet_capture_core):
     """패킷 캡처 코어에 방어 메커니즘 등록"""

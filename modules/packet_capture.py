@@ -93,6 +93,7 @@ class PacketCaptureCore:
         self.capture_completed = False
         self.defense_callback = None  # 방어 모듈 콜백 함수
         self.enable_defense = False   # 방어 기능 활성화 여부
+        self.active_interface = None  # 현재 사용 중인 인터페이스
 
     def register_defense_module(self, callback_function):
         """방어 모듈 콜백 함수를 등록합니다."""
@@ -135,6 +136,10 @@ class PacketCaptureCore:
         interfaces = psutil.net_if_addrs()
         return list(interfaces.keys())
 
+    def get_active_interface(self):
+        """현재 활성화된 인터페이스 이름을 반환합니다."""
+        return self.active_interface
+
     def start_capture(self, interface, max_packets):
         """패킷 캡처를 시작합니다."""
         if self.is_running:
@@ -142,6 +147,7 @@ class PacketCaptureCore:
         self.is_running = True
         self.packet_count = 0
         self.max_packets = max_packets
+        self.active_interface = interface  # 활성 인터페이스 저장
         print(f"Starting packet capture on interface: {interface} with max_packets: {max_packets}")
         
         def packet_callback(packet):
